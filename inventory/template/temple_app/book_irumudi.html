@@ -1,0 +1,111 @@
+{% include 'temple_app\nav_bar.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Irumudi Booking</title>
+
+    <style>
+        body{
+            height: 100%;
+            background-color: #ca6e39;
+        }
+        
+        main {
+            padding-top: 30px;
+            display:flex;
+            align-items: center;
+            justify-content: center;
+            background-color:#ca6e39;;
+        }
+        
+        form {
+            margin: auto;
+            height: auto;
+            width: 350px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 80%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            
+        }
+
+        button {
+    
+            background-color: #000000;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            margin: auto;
+           
+        }
+
+        button:hover {
+            background-color: #0039d5;
+        }
+     
+       
+    </style>
+</head>
+<body>
+    {%  block  content %}
+    
+    <main>
+    <form method="post" action="{% url 'irumudi_book' %}">
+        {% csrf_token %}
+        <h1>
+                Book Irumudi
+        </h1>
+        <label for="cust_name">Customer Name:</label>
+        <input type="text" id="cust_name" name="cust_name" required>
+
+        <label for="cont_id">Contact :</label>
+        <input type="number" name="contact_id" required>
+        
+        <label for="price">Irumudi Price:</label>
+        <input type="number" name="irumudi_price" required>
+
+        <label for="qty">Irumudi Quantity:</label>
+        <input type="number"  name="irumudi_qty" required>
+
+        <label for="sch_date">Scheduled Date:</label>
+        <input type="date" name="sch_date">
+
+        <label for="amt">Amount Recevied:</label>
+        <input type="number"  name="paid_amount" required>
+        <br>
+        <button type="submit">Submit & Print</button>
+
+        <div>
+            {% if messages %}
+            {% for msg in messages %}
+                 <h3> {{msg}}</h3>
+            {% endfor %}
+            {% endif %}
+           </div>
+           <br>
+           
+        </form>
+        
+    </main>   
+</body>
+{% endblock %}
+</html>

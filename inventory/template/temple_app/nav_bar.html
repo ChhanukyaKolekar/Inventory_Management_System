@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    nav {
+      background-color: #000000;
+      overflow: hidden;
+    }
+
+    nav a {
+      float: left;
+      display: block;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+    }
+
+    nav a:hover {
+      background-color: #6991ff;
+      color: black;
+    }
+  </style>
+  
+</head>
+
+
+<body>
+    <nav>
+            <a href="{% url 'update' %}"> Stock Update </a>
+            <a href="{% url 'irumudi_book' %}">Book Irumudi </a>
+            <a href="{% url 'items_list' %}">Irumudi Items </a>
+            <a href="{% url 'maaladharane' %}">Maaladharane/ Archane Receipt</a>
+            <a href="{% url 'ghee' %}">Ghee Coconut Receipt </a>
+            <a href="{% url 'irumudi_register' %}">Irumudi Booking Record</a>
+            <a href="{% url 'expenses' %}">Cash Report </a>
+    </nav>
+    {% block content %}
+    
+    {%  endblock  %}
+</body>
+
+</html>
