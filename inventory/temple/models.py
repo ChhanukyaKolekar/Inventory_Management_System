@@ -26,17 +26,17 @@ class inventory_items_stock(models.Model):
         return self.cust_name
     
 class Irumudi_bookig_receipt(models.Model):
-    receipt_number = models.CharField(max_length=20, unique=True)
-    contact_id=models.IntegerField()
-    cust_name=models.CharField(max_length=100)
-    irumudi_price=models.IntegerField()
-    irumudi_qty=models.IntegerField()
-    date_created=models.DateField(default=datetime.date.today)
-    sch_date=models.DateField()
-    paid_amount=models.IntegerField()
-    balance=models.IntegerField()
-    total_price=models.IntegerField()
+    Receipt_Number = models.CharField(max_length=20, unique=True)
+    Contact=models.TextField()
+    Customer_Name=models.CharField(max_length=100)
+    Irumudi_Price=models.IntegerField()
+    Irumudi_Quantity=models.IntegerField()
+    Booking_Date=models.DateField(default=datetime.date.today)
+    Schedule_Date=models.DateField()
+    Amount_Paid=models.IntegerField()
+    Balance=models.IntegerField()
+    Total_Amount=models.IntegerField()
 
     def __str__(self):
-        return self.receipt_number
+        return self.Receipt_Number
 
