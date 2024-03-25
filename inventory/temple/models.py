@@ -1,3 +1,4 @@
+
 from django.db import models
 from django.utils import timezone
 import datetime
@@ -12,18 +13,17 @@ class inventory_items_stock(models.Model):
 
     def update_stock_on_sale(self, quantity_sold):
         if quantity_sold <= self.items_in_stock:
-            self.items_sold += quantity_sold
+            self.item_sold += quantity_sold
             self.items_in_stock -= quantity_sold
             self.save()
-        else:
-            pass
+
+    def update_existing_value(self,value_update):
+        self.items_in_stock+=value_update  
+        self.save()
 
     def __str__(self):
         return self.items
 
-
-    def __str__(self):
-        return self.cust_name
     
 class Irumudi_bookig_receipt(models.Model):
     Receipt_Number = models.CharField(max_length=20, unique=True)
@@ -37,6 +37,40 @@ class Irumudi_bookig_receipt(models.Model):
     Balance=models.IntegerField()
     Total_Amount=models.IntegerField()
 
+    def amount_update(self,ap_value):
+        self.Amount_Paid+=ap_value
+        self.Balance-=ap_value
+        self.save()
+
     def __str__(self):
         return self.Receipt_Number
+
+class Maaladharane(models.Model):
+    Receipt_Number = models.CharField(max_length=20, unique=True)
+    Customer_Name=models.CharField(max_length=100)
+    Date=models.DateField(default=datetime.date.today)
+    Total_Amount=models.IntegerField(default=15)
+
+class Ghee_Coconut(models.Model):
+    Receipt_Number = models.CharField(max_length=20, unique=True)
+    Customer_Name=models.CharField(max_length=100)
+    Date=models.DateField(default=datetime.date.today)
+    Total_Amount=models.IntegerField(default=130)
+
+class Temple_seva_receipt(models.Model):
+    Seva_Type=models.CharField(max_length=250)
+    Booking_Date=models.DateField(default=datetime.date.today)
+    Schedule_Date=models.DateField()
+    Receipt_Number = models.CharField(max_length=20, unique=True)
+    Customer_Name=models.CharField(max_length=100)
+    Contact=models.TextField()
+    Total_Amount=models.IntegerField()
+    Amount_Paid=models.IntegerField()
+    Balance=models.IntegerField()
+
+class Items_sold_rcpt(models.Model):
+    Receipt_Number = models.CharField(max_length=20, unique=True)
+    Date=models.DateField(default=datetime.date.today)
+    Product_name=models.TextField()
+    Total_Amount=models.IntegerField()
 

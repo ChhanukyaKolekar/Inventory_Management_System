@@ -1,0 +1,106 @@
+{% include 'temple_app\nav_bar.html' %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Records</title>
+<style>
+    body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        background-color: #f2803e;
+       
+    }
+
+    main {
+        
+        padding-top: 30px;
+        display: flex;
+        justify-content: center;
+        background-color: #f2803e;
+    }
+
+
+  table {
+
+    padding: 20px;
+    font-size:small;
+    width:  35%;
+    border-collapse: collapse;
+  }
+  th, td {
+    border: 2px solid black;
+    padding:    6px;
+    font-size: 100%;
+    
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  td{
+    background-color: #0ad2fa;
+
+  }
+  .container{
+    margin: auto;
+    display:table;
+    
+    width: 70%;
+    height: auto;
+    text-align:center;
+  }
+
+</style>
+</head>
+<body>
+{% block content %}
+
+     
+       <div class="container">
+    
+            {% if data_list %}
+           
+            <table>
+                <thead>
+                    <tr>
+                        
+                        {% for key in key_set %}
+                             <th>{{ key}}</th>
+                        {% endfor %}
+                    
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in data_list %}
+                        <tr>
+                            {% for value in data.values %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <br>
+            </table>
+          
+              
+          {% endif %}
+
+          {% if text %}
+
+            <h2>
+              {{text}}
+            </h2>
+          {% endif %}              
+    
+
+
+    
+    </div>
+    
+{% endblock %}
+</body>
+</html>

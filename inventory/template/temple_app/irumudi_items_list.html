@@ -7,110 +7,187 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Irumudi Items</title>
 </head>
-    <style>
-        body{
-            height: 100%;
-            background-color: #ca6e39;
-        }
+<style>
+    body {
+        height: 100%;
+        width: 100%;
+        margin: 0; /* Remove default margin */
+        background-color: #f2803e;
+    }
+
+    main {
         
-        main {
-            padding-top: 30px;
-            display:flex;
-            align-items: center;
-            justify-content: center;
-            background-color:#ca6e39;;
-        }
+        padding-top: 30px;
+        display: flex;
+        justify-content: center;
+        background-color: #f2803e;
+    }
+
+    form {
+        margin: auto;
+        height: auto;
+        width: 400px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    input, select {
+        width: 80%;
+        padding: 8px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    button {
+        background-color: #000000;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        display: block;
+        margin: auto;
+    }
+
+    button:hover {
+        background-color: #0039d5;
+    }
+    .message-container {
+        text-align: center; 
+        font-size: 20px;
+        font-family: Arial,sans-serif; 
+        color: #080b33;
+    }
+    table {
+        margin: 0;
+        justify-content: center;
+        padding: 20px;
+        font-size:medium;
+        width:  96%;
+        border-collapse: collapse;
+        text-align: center;
+      }
+      th, td {
+        border: 2px solid black;
+        padding: 6px;
+        font-size: 100%;
         
-        form {
-            margin: auto;
-            height: auto;
-            width: 350px;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        input, select {
-            width: 80%;
-            padding: 8px;
-            margin-bottom: 16px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            
-        }
-
-        button {
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      td{
+        background-color: #0ad2fa;
     
-            background-color: #000000;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            display: block;
-            margin: auto;
-           
-        }
+      }
+</style>
 
-        button:hover {
-            background-color: #0039d5;
-        }
-    </style>
-
-</head>
 <body>
-    {%  block  content %}
-    
-    <main>
-    <form method="post" action="{% url 'items_list' %}">
-        {% csrf_token %}
-        <h1>
-            Items
-        </h1>
-       <div>
-            <label for="items_list">Items:</label>
-
-            <select id="items" name="items_value" required>
-                <option value="" disabled selected>Select item</option>
-                {% for i in list_of_items %}
-                <option value='{{i}}'>{{i}}</option>
-            {% endfor %}
-
-            </select>
-        </div>
-        <label for="qty">Quantity:</label>
-        <input type="number"  name="qty" required>
-   
-     
-        <label for="items_sale_price">Items Sale Price:</label>
-        <input type="number" id="items_sale_price" name="items_sale_price" required>
-
-        <label for="items_in_stock">Items in Stock:</label>
-        <input type="number" id="items_in_stock" name="items_in_stock">
-
-        <br>
-        <button type="submit">Submit</button>
-        <div>
-            {% if messages %}
+    {% block content %}
+    <br>
+    <div class="message-container"> 
+        {% if messages %}
             {% for msg in messages %}
-                 <h3> {{msg}}</h3>
+                <B><h2> {{msg}}</h2></B> 
             {% endfor %}
+        {% endif %}
+    </div>
+    <main>
+        <form method="post" action="{% url 'items_list' %}" class="form2">
+            {% csrf_token %}
+            <h3>Add Items</h3>
+            <div>
+                <label for="items_list">Items:</label>
+                <select id="items" name="items_value">
+                    <option value="" disabled selected>Select item</option>
+                    {% for i in list_of_items %}
+                    <option value='{{i}}'>{{i}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <label for="qty">Quantity:</label>
+            <input type="number"  name="qty" >
+            <button type="submit" name="add_button">Add</button>
+            <br>
+
+            {% if data %}
+            <h3>Added to Cart</h3>
+           
+            <table>
+                <thead>
+                    
+                    <tr>
+                        <th>{{col.0}}</th>
+                        <th>{{col.1}}</th>
+                        <th>{{col.2}}</th>
+                        <th>{{col.3}}</th>
+                    </tr>
+                    {% for k,v in data.items %}
+                    <tr>
+                        <td>
+                            {{k}}
+
+                        </td>
+                        <td>
+                            {{v.0}}   
+                        </td>
+                        <td>
+                            {{v.1}}
+                        </td>
+                        <td>
+                            {{v.2}}
+                        </td>
+                        
+                    </tr>
+                    {% endfor %}
+
+                 
+
+
+                </thead>
+            
+            </table>
+            <br>
+            <button type="submit" name="submit_button">Submit</button>
+    
             {% endif %}
-           </div>
+            <br>
+            
+            <br>
+            
         </form>
+
+        <form action="{% url 'items_list' %}" method="POST" class="form1">
+            {% csrf_token %}
+            <h3>Check Stock</h3>
+            <div>
+                <label for="items_list">Items:</label>
+                <select id="items" name="items_value" required>
+                    <option value="" disabled selected>Select item</option>
+                    {% for i in list_of_items %}
+                    <option value='{{i}}'>{{i}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" name="check_button">Check</button>
+
+            
+        </form>
+
+        
         
     </main>
-   
+    <br>
+        
+    {% endblock %}
 </body>
-{% endblock %}
-
-   
-   
 </html>

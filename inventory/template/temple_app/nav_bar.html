@@ -11,11 +11,14 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
+      height: auto;
+      width: auto;
     }
 
     nav {
       background-color: #000000;
       overflow: hidden;
+      width: 100%;
     }
 
     nav a {
@@ -28,7 +31,7 @@
     }
 
     nav a:hover {
-      background-color: #6991ff;
+      background-color: #ffffff;
       color: black;
     }
   </style>
@@ -38,13 +41,14 @@
 
 <body>
     <nav>
-            <a href="{% url 'update' %}"> Stock Update </a>
-            <a href="{% url 'irumudi_book' %}">Book Irumudi </a>
-            <a href="{% url 'items_list' %}">Irumudi Items </a>
-            <a href="{% url 'maaladharane' %}">Maaladharane/ Archane Receipt</a>
-            <a href="{% url 'ghee' %}">Ghee Coconut Receipt </a>
-            <a href="{% url 'irumudi_register' %}">Irumudi Booking Record</a>
-            <a href="{% url 'expenses' %}">Cash Report </a>
+            <a href="{% url 'update' %}"> <b>Stock Update</b> </a>
+            <a href="{% url 'irumudi_book' %}"> <b> Book Irumudi</b> </a>
+            <a href="{% url 'items_list' %}"><b> Irumudi Items</b> </a>
+            <a href="{% url 'maaladharane' %}"><b> Maaladharane </b></a>
+            <a href="{% url 'ghee' %}"><b> Ghee/Coconut</b> </a>
+            <a href="{% url 'irumudi_register' %}"><b> Irumudi Booking Record</b></a>
+            <a href="{% url 'expenses' %}"><b> Cash Report</b> </a>
+            <a href="{% url 'temple_s' %}"><b> Temple Seva</b> </a>
     </nav>
     {% block content %}
     
