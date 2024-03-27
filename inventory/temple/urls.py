@@ -10,6 +10,7 @@ urlpatterns = [
     path('ghee_coconut_receipt/',views.ghee,name='ghee'),
     path('irumudi_record/',views.irumudi_register,name='irumudi_register'),
     path('cash_report/',views.expenses,name='expenses'),
+    path("expenditure",views.expense,name="exp_entry"),
     path('temple_seva/', views.temple_seva_ ,name='temple_s'),
     # path('irumudi_record/irumudi_record/', views.record_tabel ,name='records_page'),
     path('pdf/',views.generate_pdf,name="gen_pdf")

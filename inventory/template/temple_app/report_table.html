@@ -1,0 +1,196 @@
+{% include 'temple_app\nav_bar.html' %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Records</title>
+<style>
+    body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        background-color: #f2803e;
+       
+    }
+
+    main {
+        
+        padding-top: 30px;
+        display: flex;
+        justify-content: center;
+        background-color: #f2803e;
+    }
+    .containerB, .containerC, .container {
+        display: inline-block; 
+        vertical-align: top; 
+        margin-left: 20px;
+        justify-content: center;
+        margin-bottom: 15px;
+      
+    }
+    .container {
+        width: calc(33.33% - 20px); /* Divide the width equally for each container */
+    }
+    table {
+         padding: 20px;
+  
+        border-collapse: collapse;
+        width: 100%;
+  
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: center;
+    }
+    th {
+        background-color: #f2f2f2;
+      }
+      td{
+        background-color: #0ad2fa;
+    
+      }
+
+  h2{
+    text-align: center;
+  
+  }
+
+
+</style>
+</head>
+<body>
+{% block content %}
+    <br>
+    <h2>
+        From: {{from_date}}  To:{{to_date}}
+
+    </h2>
+    
+    {% if from_date and to_date %}
+     
+    <div class="container">   
+        <table >
+
+                <thead>
+                    <tr>
+                        <th>{{col1.0}}</th>
+                        <th>{{col1.1}}</th>
+                        <th>{{col1.2}}</th>
+                    </tr>
+            
+                
+            </thead>
+
+            <tbody>
+                <tr>
+                    {%for ir in ir_data %}
+                        <td>
+                            {{ir}}
+                        </td>
+                    {% endfor %}
+                
+                <tr>
+                    {%for ml in ml_data %}
+                    <td>
+                        {{ml}}
+                    </td>
+                    {% endfor %}
+
+                </tr>
+                
+                <tr>
+                    {%for gl in gl_data %}
+                        <td>
+                            {{gl}}
+                        </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {%for il in id_data %}
+                        <td>
+                            {{il}}
+                        </td>
+                    {% endfor %}
+                </tr>
+
+                </tr>
+                
+              
+            </tbody>
+        </table>
+        <br>
+</div>
+    <div class="containerB">
+        <table>
+            <thead>
+                <tr>
+                    <th> IL No</th>
+                    <th> Total Amount</th>
+                </tr>
+                
+                
+            </thead>
+            <tbody>
+                <tr>
+                    {% for rc,amt in items_sold%}
+                    <tr>
+                        <td>
+                            {{rc}}
+    
+                        </td>
+                        <td>
+                            {{amt}}
+                        </td>
+
+                    </tr>
+                    
+                    
+                
+                   
+        
+                {% endfor %}
+            </tbody>
+            </table>
+    </div>
+    <div class="containerC">
+      
+        <table>
+            <thead>
+                <tr>
+                    <th> IR No</th>
+                    <th> Total Amount</th>
+                </tr>
+                
+                
+            </thead>
+            <tbody>
+                <tr>
+                    {% for rc,amt in irumudi_sold%}
+                    <tr>
+                        <td>
+                            {{rc}}
+    
+                        </td>
+                        <td>
+                            {{amt}}
+                        </td>
+
+                    </tr>
+        
+                {% endfor %}
+            </tbody>
+            </table>
+
+
+    </div>
+    
+
+    {% endif %}
+    
+{% endblock %}
+</body>
+</html>

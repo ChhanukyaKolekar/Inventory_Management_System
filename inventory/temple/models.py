@@ -10,6 +10,7 @@ class inventory_items_stock(models.Model):
     items_sale_price=models.IntegerField()
     item_sold=models.IntegerField(default=0)
     items_in_stock=models.IntegerField()
+    
 
     def update_stock_on_sale(self, quantity_sold):
         if quantity_sold <= self.items_in_stock:
@@ -74,3 +75,14 @@ class Items_sold_rcpt(models.Model):
     Product_name=models.TextField()
     Total_Amount=models.IntegerField()
 
+class Expenses(models.Model):
+    Date=models.DateField(default=datetime.date.today)
+    Description=models.TextField()
+    Amount=models.IntegerField()
+
+
+class Daily_Expense(models.Model):
+    Date=models.DateField(default=datetime.date.today)
+    Income=models.IntegerField()
+
+    

@@ -3,7 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
-from . models import inventory_items_stock,Irumudi_bookig_receipt, Maaladharane, Ghee_Coconut, Items_sold_rcpt
+from . models import inventory_items_stock,Irumudi_bookig_receipt, Maaladharane, Ghee_Coconut, Items_sold_rcpt, Expenses
 # Create your views here.
 import datetime
 from django.contrib import messages
@@ -297,11 +297,119 @@ def irumudi_register(request):
     request.session.clear()
     return render (request, 'temple_app/records_irumudi.html')
     
-def record_tabel(request):
-    pass
 
 def expenses(request):
-    pass
+    pass_data=["Irumudi","Maaladharane","Ghee/Coconut","Materials"]
+
+    if request.method=="POST":
+        data=request.POST
+        report_for=data.get("selected_parameter")
+        from_date=data.get("from_Date")
+        to_date=data.get("to_Date")
+
+        print(from_date,to_date)
+
+        # if report_for=="Irumudi":
+        irumudi_cash=Irumudi_bookig_receipt.objects.all().filter(Booking_Date__range=(from_date,to_date))
+        irumudi_sale_count=irumudi_cash.count()
+        irumudi_cash_values=irumudi_cash.values_list("Receipt_Number","Amount_Paid")
+        #print(irumudi_cash_values)
+
+        end_index=irumudi_sale_count-1
+        start_rcpt=irumudi_cash_values[0][0]
+        end_rcpt=irumudi_cash_values[end_index][0]
+        total_cost_in_set_period=0
+
+        for key,val in irumudi_cash_values:
+            total_cost_in_set_period+=val
+            # print(key,val)
+
+        irumudi_list=[(start_rcpt,end_rcpt),irumudi_sale_count,total_cost_in_set_period]
+        print(start_rcpt,end_rcpt,irumudi_sale_count,total_cost_in_set_period)
+        
+    ## MAALADHARANE
+        
+        maaladharane_cash=Maaladharane.objects.all().filter(Date__range=(from_date,to_date))
+        maaladharane_cash_count=maaladharane_cash.count()
+
+        maaladharane_cash_values=maaladharane_cash.values_list("Receipt_Number","Date","Total_Amount")
+
+        maaladharane_end_index=maaladharane_cash_count-1
+
+        maaladharane_start_rcpt=maaladharane_cash_values[0][0]
+        maaladharane_end_rcpt=maaladharane_cash_values[maaladharane_end_index][0]
+
+        total_cost_maaladharne=0
+        for k,v,amt in maaladharane_cash_values:
+            total_cost_maaladharne+=amt
+
+        print(maaladharane_start_rcpt,maaladharane_end_rcpt,maaladharane_cash_count,total_cost_maaladharne)
+        maaladharane_list=[(maaladharane_start_rcpt,maaladharane_end_rcpt),maaladharane_cash_count,total_cost_maaladharne]    
+
+    ## Items_sold_rcpt
+
+        items_sold_rcpt_cash=Items_sold_rcpt.objects.all().filter(Date__range=(from_date,to_date))
+        items_sold_rcpt_cash_count=items_sold_rcpt_cash.count()
+
+        items_sold_rcpt_cash_values=items_sold_rcpt_cash.values_list("Receipt_Number","Total_Amount")
+
+        items_sold_end_index=items_sold_rcpt_cash_count-1
+
+        items_startindex=items_sold_rcpt_cash_values[0][0]
+
+        items_endindex=items_sold_rcpt_cash_values[items_sold_end_index][0]
+
+        total_cost_items=0
+        for k,v in items_sold_rcpt_cash_values:
+
+            total_cost_items+=v
+
+        print(items_startindex,items_endindex,items_sold_rcpt_cash_count,total_cost_items)
+        
+        items_data_list=[(items_startindex,items_endindex),items_sold_rcpt_cash_count,total_cost_items]
+
+
+    ##GheeCoconut
+
+        gc_cash=Ghee_Coconut.objects.all().filter(Date__range=(from_date,to_date))
+        gc_cash_count=gc_cash.count()
+
+        gc_cash_values=gc_cash.values_list("Receipt_Number","Date","Total_Amount")
+
+        gc_end_index=gc_cash_count-1
+
+        gc_start_rcpt=gc_cash_values[0][0]
+        gc_end_rcpt=gc_cash_values[gc_end_index][0]
+
+        total_cost_gc=0
+        for k,v,amt in gc_cash_values:
+            total_cost_gc+=amt
+
+        print(gc_start_rcpt,gc_end_rcpt,gc_cash_count,total_cost_gc)
+        gc_list=[(gc_start_rcpt,gc_end_rcpt),gc_cash_count,total_cost_gc]    
+
+    # Item Contents
+        
+       
+    
+        col1=["Receipt Range","Sold","Total Cost"]
+
+
+        
+        # zipped_data=zip(irumudi_list,maaladharane_list,gc_list)
+        return render(request,'temple_app/report_table.html',{"ir_data":irumudi_list,'ml_data': maaladharane_list,"gl_data":gc_list, "id_data":items_data_list,"col1":col1,"from_date":from_date,"to_date":to_date,"items_sold":items_sold_rcpt_cash_values,"irumudi_sold":irumudi_cash_values})
+    
+    return render(request,'temple_app/cash_report.html',{'my_rcpts':pass_data})
+    
+
+def expense(request):
+    if request.method=="POST":
+        data=request.POST
+        Description=data.get("Description")
+        Amount=int(data.get("Amount_Spent"))
+        store_o_db=Expenses.objects.create(Description=Description,Amount=Amount)
+
+    return render(request,'temple_app/exp_entry.html')
 
 def temple_seva_(request):
     seva_list=["abhisheka","alankara"]
