@@ -79,10 +79,10 @@ class Expenses(models.Model):
     Date=models.DateField(default=datetime.date.today)
     Description=models.TextField()
     Amount=models.IntegerField()
+    
 
-
-class Daily_Expense(models.Model):
-    Date=models.DateField(default=datetime.date.today)
-    Income=models.IntegerField()
+# class Daily_Expense(models.Model):
+#     Date=models.DateField(default=datetime.date.today)
+#     Income=models.IntegerField()
 
     

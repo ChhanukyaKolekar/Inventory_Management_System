@@ -23,7 +23,7 @@
         justify-content: center;
         background-color: #f2803e;
     }
-    .containerB, .containerC, .container {
+    .containerB, .containerC, .container , .containerd,.containerE{
         display: inline-block; 
         vertical-align: top; 
         margin-left: 20px;
@@ -71,7 +71,7 @@
     </h2>
     
     {% if from_date and to_date %}
-     
+    
     <div class="container">   
         <table >
 
@@ -118,6 +118,11 @@
                 </tr>
 
                 </tr>
+                <tr>
+                    <th>
+                        Grand Total: Rs.{{gt}}
+                    </th>
+                </tr>
                 
               
             </tbody>
@@ -147,12 +152,9 @@
                         </td>
 
                     </tr>
-                    
-                    
                 
-                   
-        
                 {% endfor %}
+                
             </tbody>
             </table>
     </div>
@@ -187,6 +189,68 @@
 
 
     </div>
+
+    <div class="containerd" >
+
+        <table>
+            <thead>
+                <tr>
+                  <th>
+                    Description
+                  </th>
+                  <th>
+                    Total Expense
+                  </th>
+    
+                </tr>
+
+            </thead>
+            <tbody>
+                <tr>
+                    {% for k,v in exp_values%}
+
+                    <tr>
+                        <td>
+                            {{k}}
+                        </td>
+                        <td>
+                            {{v}}
+                        </td>
+
+                    </tr>
+                    {%  endfor %}
+                    
+                    <tr>
+                        <th>
+                          Grand Total: Rs.{{grand_total}}
+                        </th>
+                    </tr>
+
+                </tr>
+                
+
+
+            </tbody>
+            
+
+        </table>
+
+    </div>
+    <div class="containerE">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        Net Balance: Rs.{{net_balance}}
+                    </th>
+                    
+                </tr>
+            </thead>
+        </table>
+    </div>
+     
+    
     
 
     {% endif %}

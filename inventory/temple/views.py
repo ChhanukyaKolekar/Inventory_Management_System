@@ -389,15 +389,22 @@ def expenses(request):
         gc_list=[(gc_start_rcpt,gc_end_rcpt),gc_cash_count,total_cost_gc]    
 
     # Item Contents
-        
+        zipped_data=zip(irumudi_list,maaladharane_list,gc_list,items_data_list)
        
-    
+        grand_total=irumudi_list[2]+maaladharane_list[2]+gc_list[2]+items_data_list[2]
         col1=["Receipt Range","Sold","Total Cost"]
+        print(grand_total)
 
+        exp_data=Expenses.objects.all().filter(Date__range=(from_date,to_date))
+        exp_values=exp_data.values_list("Description","Amount")
+        exp_grand_total=0
 
-        
-        # zipped_data=zip(irumudi_list,maaladharane_list,gc_list)
-        return render(request,'temple_app/report_table.html',{"ir_data":irumudi_list,'ml_data': maaladharane_list,"gl_data":gc_list, "id_data":items_data_list,"col1":col1,"from_date":from_date,"to_date":to_date,"items_sold":items_sold_rcpt_cash_values,"irumudi_sold":irumudi_cash_values})
+        for k,v in exp_values:
+            exp_grand_total+=v
+            print(k,v)
+
+        net_balance=grand_total-exp_grand_total
+        return render(request,'temple_app/report_table.html',{"ir_data":irumudi_list,'ml_data': maaladharane_list,"gl_data":gc_list, "id_data":items_data_list,"col1":col1,"from_date":from_date,"to_date":to_date,"items_sold":items_sold_rcpt_cash_values,"irumudi_sold":irumudi_cash_values,"gt":grand_total,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_balance})
     
     return render(request,'temple_app/cash_report.html',{'my_rcpts':pass_data})
     
