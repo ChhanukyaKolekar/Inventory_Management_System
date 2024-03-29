@@ -81,8 +81,13 @@ class Expenses(models.Model):
     Amount=models.IntegerField()
     
 
-# class Daily_Expense(models.Model):
-#     Date=models.DateField(default=datetime.date.today)
-#     Income=models.IntegerField()
+class Daily_Expense(models.Model):
+    Date=models.DateField(default=datetime.date.today)
+    Income=models.IntegerField(default=0)
+
+    
+    def daily_update(self,today_balance):
+        self.Income+=today_balance
+        self.save()
 
     
