@@ -11,7 +11,7 @@ urlpatterns = [
     path('irumudi_record/',views.irumudi_register,name='irumudi_register'),
     path('cash_report/',views.expenses,name='expenses'),
     path("expenditure",views.expense,name="exp_entry"),
-    # path('temple_seva/', views.temple_seva_ ,name='temple_s'),
+    path('schd_dates/', views.scheduled_irumudi ,name='scheduled_list'),
     # path('irumudi_record/irumudi_record/', views.record_tabel ,name='records_page'),
     path('pdf/',views.generate_pdf,name="gen_pdf")
 

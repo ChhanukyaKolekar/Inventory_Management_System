@@ -5,7 +5,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from . models import inventory_items_stock,Irumudi_bookig_receipt, Maaladharane, Ghee_Coconut, Items_sold_rcpt, Expenses, Daily_Expense
 # Create your views here.
-import datetime
+from datetime import datetime
 from django.contrib import messages
 from reportlab.pdfgen import canvas
 
@@ -310,9 +310,9 @@ def expenses(request):
         col1=["Receipt Range","Sold","Total Cost"]
         print(ir_result,ml_result,gc_result,il_result, grand_total_)
 
-        # net_total_today=daily_fun(net_result)
+        net_total_today=daily_fun(net_result)
       
-        return render(request,'temple_app/report_table.html',{"ir_data":ir_result,'ml_data': ml_result,"gl_data":gc_result, "id_data":il_result,"col1":col1,"from_date":from_Date,"to_date":to_Date,"items_sold":il_cash_value,"irumudi_sold":ir_cash_value,"gt":grand_total_,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_result})
+        return render(request,'temple_app/report_table.html',{"ir_data":ir_result,'ml_data': ml_result,"gl_data":gc_result, "id_data":il_result,"col1":col1,"from_date":from_Date,"to_date":to_Date,"items_sold":il_cash_value,"irumudi_sold":ir_cash_value,"gt":grand_total_,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_total_today})
     
     return render(request,'temple_app/cash_report.html',{'my_rcpts':pass_data})
     
@@ -326,11 +326,36 @@ def expense(request):
 
     return render(request,'temple_app/exp_entry.html')
 
-# def temple_seva_(request):
-#     seva_list=["abhisheka","alankara"]
+def scheduled_irumudi(request):
+    if request.method=='POST':
+        data=request.POST
+        from_date=data.get("from_Date")
+        to_date=data.get("to_Date")
+        key_col=[]
+        fetch_data=None
+        message=None
+        try:
+            fetch_data=Irumudi_bookig_receipt.objects.filter(Schedule_Date__range=(from_date,to_date)).values()
+            print("TRY WAS CALLED",fetch_data)
+            if not fetch_data.exists():
+                print("Not exist")
+                message=f"No Schedules from {from_date} to {to_date}"
+                return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message})
+            for k in fetch_data[0].keys():
+                key_col.append(k)
+            print(key_col)
+            return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message,'from_date':from_date,'to_date':to_date})    
+        except:
+            fetch_data=Irumudi_bookig_receipt.objects.all().filter(Schedule_Date=from_date).values()
+            if not fetch_data.exists():
+                message=f"No Schedules on {from_date} "
+                return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message,'from_date':from_date,'to_date':to_date})
+            for k in fetch_data[0].keys():
+                key_col.append(k)
 
-#     return render (request, 'temple_app/tmp_seva.html')
+            return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message,'from_date':from_date,'to_date':to_date})
 
+    return render(request,'temple_app/scheduled_list_irumudi.html')
 
 def generate_pdf(rcpt_title, rcpt_no,current_date,query_data,total_amt=None,col_name_list=None,table=False):
     
@@ -557,32 +582,47 @@ def exp_fun(from_date,to_date,grand_total):
 def daily_fun(net_balance):
     income_col=None
     date_col=None
-    try:
-        store_net_balance=Daily_Expense.daily_update(today_balance=net_balance)
+
+    # try:
+    #     store_net_balance=Daily_Expense.daily_update(today_balance=net_balance)
         
-    except:
-        Daily_Expense.objects.create(Income=net_balance)
+    # except:
+    #     Daily_Expense.objects.create(Income=net_balance)
     
     last_row=Daily_Expense.objects.last()
     income_col=last_row.Income
     date_col=last_row.Date
+    
+    prsent=datetime.now()
+    pr_date=prsent.date()
+  
+    print("############my_income", income_col,date_col,prsent,pr_date)
 
-    if date_col==datetime.date.today:
-        Daily_Expense.objects.get(Date=datetime.date.today).update(Income=net_balance)
-        return net_balance
+    if date_col==pr_date:
+        print("Yes Equal")
+        db=Daily_Expense.objects.filter(Date=date_col)
+        db_inst=Daily_Expense.objects.get(Date=date_col)
+        op=db.values_list("Date","Income")[0]
+        db_date=op[0]
+        db_income=op[1]
+
+        if db_income!=net_balance:
+            print("unequal")
+            update_row= db_inst.daily_update(today_balance=net_balance)
+            up_value=db.values_list("Income")[0][0]
+            print(db_date,db_income,up_value)
+            return up_value
+        print(db_date,db_income)
+        return db_income
     else:
-        Daily_Expense.objects.create()
-        net_bal=Daily_Expense.daily_update(today_balance=net_balance)
-        last_row=Daily_Expense.objects.last().Income
-        return last_row
-
-
-
-
-
+        prev_day=income_col+net_balance
+        Daily_Expense.objects.create(Income=prev_day)
+        fresh_row=Daily_Expense.objects.last()
+        curr_net_balnce=fresh_row.Income
+        print(curr_net_balnce)
+        return curr_net_balnce
     
 
-    
 
 def fetch_2_index(list_of_lists):
     

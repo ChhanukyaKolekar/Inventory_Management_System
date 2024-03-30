@@ -58,12 +58,13 @@
 </head>
 <body>
 {% block content %}
-
      
+
        <div class="container">
-    
-            {% if data_list %}
-           
+        {% if data_list %}
+        {% if from_date %}
+        <h3>From: {{from_date}} <br> To: {{to_date}} </h3>
+      {%endif%}    
             <table>
                 <thead>
                     <tr>
@@ -94,7 +95,9 @@
             <h2>
               {{text}}
             </h2>
-          {% endif %}              
+          {% endif %}  
+          
+                  
     
 
 
