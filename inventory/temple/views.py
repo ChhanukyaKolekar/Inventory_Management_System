@@ -9,26 +9,25 @@ from datetime import datetime
 from django.contrib import messages
 from reportlab.pdfgen import canvas
 
-
-
-def add_items(request):
-    global items_list
-    items_list=[ "Mala block spatica 6mm",
-        "Mala white spatica 6mm",
-        "Mala block spatica 8mm",
-        "Mala white spatica 8mm",
-        "Towel block 150mm x 100mm",
-        "Towel kavi 150mm x 100mm",
-        "Doti Black",
-        "Doti kavi",
-        "Bedsheet",
-        "Irumudi bag",
-        "Side bag",
-        "Doti Blue",
-        "Maale poo rudrakshi"
-        
-    ]
+global items_list
+items_list=[ "Mala block spatica 6mm",
+    "Mala white spatica 6mm",
+    "Mala block spatica 8mm",
+    "Mala white spatica 8mm",
+    "Towel block 150mm x 100mm",
+    "Towel kavi 150mm x 100mm",
+    "Doti Black",
+    "Doti kavi",
+    "Bedsheet",
+    "Irumudi bag",
+    "Side bag",
+    "Doti Blue",
+    "Maale poo rudrakshi"
     
+]
+def home(request):
+    return render(request,'temple_app/home.html')
+def add_items(request):
     
     if request.method=='POST':
         item=inventory_items_stock.objects
@@ -107,20 +106,21 @@ def irumudi_book(request):
 
 def items_list_(request):
     title="Item Contents"
-    
-    if request.method=="POST":
+
+    if request.method=="POST":    
+        
         data=request.POST
         table=True
         act=data.get("action")
         col_list=["Item","Qty","Rate","Amt"]
-        if act=='add_button':
-        
-            item_name=data.get("items_value_list")
+        if 'add_button' in request.POST:    
+            item_name=data.get("items_value")
             item_qty=data.get("qty")  
             quantity_sold=int(item_qty)   
 
             found_item=inventory_items_stock.objects.filter(items=item_name)
             price_and_qty=found_item.values("items_sale_price","items_in_stock")
+            print("PandQ",price_and_qty )
             found_item_price=price_and_qty[0]["items_sale_price"]
             found_item_stock=price_and_qty[0]["items_in_stock"]
             
@@ -141,11 +141,11 @@ def items_list_(request):
             request.session[session_data]=[quantity_sold,found_item_price,particular_amount]
 
             contents=request.session
-            
-            return render(request,"temple_app/irumudi_items_list.html",{'data':contents,"col":col_list})
+            print(contents)
+            return render(request,"temple_app/irumudi_items_list.html",{'data':contents,"col":col_list,"list_of_items":items_list})
             
         
-        elif act=='submit_button':
+        elif 'submit_button' in request.POST:
             database_obj=Items_sold_rcpt.objects
             Receipt_Number="IL-" + str(database_obj.count()+ 1 + 1000)  
             item_content=request.session
@@ -162,8 +162,6 @@ def items_list_(request):
             fetch_date=database_obj.filter(Receipt_Number=Receipt_Number).values("Date")[0]["Date"]
             
             output_file=generate_pdf(title,Receipt_Number,fetch_date,item_content,total_amount,col_list,table)
-            
-            request.session.clear()
             request.session.flush()
             return output_file
     
@@ -172,7 +170,8 @@ def items_list_(request):
             stock_item=inventory_items_stock.objects.filter(items=item_name).values("items_in_stock")[0]['items_in_stock']
             messages.info(request, f' Only {stock_item} Left In Stock ')
             return redirect('/irumudi_items')
-     
+        elif 'finish' in request.POST:
+            request.session.flush()
     return render(request,"temple_app/irumudi_items_list.html", {"list_of_items":items_list})
                                                                                                                                                                                                                                                                                                                              
 def maaladharane(request):
@@ -334,26 +333,17 @@ def scheduled_irumudi(request):
         key_col=[]
         fetch_data=None
         message=None
-        try:
-            fetch_data=Irumudi_bookig_receipt.objects.filter(Schedule_Date__range=(from_date,to_date)).values()
-            print("TRY WAS CALLED",fetch_data)
-            if not fetch_data.exists():
-                print("Not exist")
-                message=f"No Schedules from {from_date} to {to_date}"
-                return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message})
-            for k in fetch_data[0].keys():
-                key_col.append(k)
-            print(key_col)
-            return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message,'from_date':from_date,'to_date':to_date})    
-        except:
-            fetch_data=Irumudi_bookig_receipt.objects.all().filter(Schedule_Date=from_date).values()
-            if not fetch_data.exists():
-                message=f"No Schedules on {from_date} "
-                return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message,'from_date':from_date,'to_date':to_date})
-            for k in fetch_data[0].keys():
-                key_col.append(k)
-
-            return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message,'from_date':from_date,'to_date':to_date})
+    
+        fetch_data=Irumudi_bookig_receipt.objects.filter(Schedule_Date__range=(from_date,to_date)).values()
+        print("TRY WAS CALLED",fetch_data)
+        if not fetch_data.exists():
+            print("Not exist")
+            message=f"No Schedules from {from_date} to {to_date}"
+            return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message})
+        for k in fetch_data[0].keys():
+            key_col.append(k)
+        print(key_col)
+        return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message,'from_date':from_date,'to_date':to_date})    
 
     return render(request,'temple_app/scheduled_list_irumudi.html')
 

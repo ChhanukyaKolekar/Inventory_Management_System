@@ -102,21 +102,21 @@
         {% endif %}
     </div>
     <main>
-        <form method="post" action="{% url 'items_list' %}" class="form2">
+        <form method="post" action="{% url 'item_lists' %}" class="form2">
             {% csrf_token %}
+            <button type="submit" name="finish">Refresh</button>
             <h3>Add Items</h3>
-            <div>
-                <label for="items_list">Items:</label>
+                 <label for="items_lst">Items:</label>
                 <select id="items" name="items_value">
                     <option value="" disabled selected>Select item</option>
                     {% for i in list_of_items %}
                     <option value='{{i}}'>{{i}}</option>
                     {% endfor %}
                 </select>
-            </div>
             <label for="qty">Quantity:</label>
             <input type="number"  name="qty" >
-            <button type="submit" name="act" value="add_button">Add</button>
+
+            <button type="submit" name="add_button">Add</button>
             <br>
 
             {% if data %}
@@ -157,7 +157,7 @@
             
             </table>
             <br>
-            <button type="submit" name="act" value="submit_button">Submit</button>
+            <button type="submit" name="submit_button">Submit</button>
     
             {% endif %}
             <br>
@@ -166,7 +166,7 @@
             
         </form>
 
-        <form action="{% url 'items_list' %}" method="POST" class="form1">
+        <form action="{% url 'item_lists' %}" method="POST" class="form1">
             {% csrf_token %}
             <h3>Check Stock</h3>
             <div>
