@@ -23,19 +23,27 @@
         justify-content: center;
         background-color: #f2803e;
     }
-    .containerB, .containerC, .container , .containerd,.containerE{
-        display: inline-block; 
-        vertical-align: top; 
-        margin-left: 20px;
-        justify-content: center;
-        margin-bottom: 15px;
-      
-    }
+ 
+
+    .main_container {
+        display: flex; 
+        justify-content: 
+      }
     .container {
-        width: calc(33.33% - 20px); /* Divide the width equally for each container */
+        width: 30%;
+        margin: 10px; 
+        
+      }
+    .container_end{
+        width: 50%;
+        margin: 10px; 
+        
     }
+  
+
+    
     table {
-         padding: 20px;
+        padding: 20px;
   
         border-collapse: collapse;
         width: 100%;
@@ -71,153 +79,186 @@
     </h2>
     
     {% if from_date and to_date %}
+    <div class="main_container">
+        <div class="container">   
+            <table >
     
-    <div class="container">   
-        <table >
-
+                    <thead>
+                        <tr>
+                            <th>{{col1.0}}</th>
+                            <th>{{col1.1}}</th>
+                            <th>{{col1.2}}</th>
+                        </tr>
+                
+                    
+                </thead>
+    
+                <tbody>
+                    <tr>
+                        {% if ir_data %}
+                        {%for ir in ir_data %}
+                            <td>
+                                {{ir}}
+                            </td>
+                        {% endfor %}
+                    
+                    <tr>
+                        {% endif %}
+    
+                        {% if ml_data%}
+                        
+                        {%for ml in ml_data %}
+                        <td>
+                            {{ml}}
+                        </td>
+                        {% endfor %}
+                        {% endif %}
+    
+                    </tr>
+                    
+                    <tr>
+                        {% if gl_data%}
+                        {%for gl in gl_data %}
+                            <td>
+                                {{gl}}
+                            </td>
+                        {% endfor %}
+                        {%  endif %}
+                    </tr>
+                    <tr>
+                        {% if id_data %}
+                        {%for il in id_data %}
+                            <td>
+                                {{il}}
+                            </td>
+                        {% endfor %}
+                        {% endif %}
+                    </tr>
+    
+                    <tr>
+                        {% if donation_amt%}
+                        {% for d in donation_amt %}
+                            <td>
+                                {{d}}
+                            </td>
+                           
+                        {%  endfor %}
+    
+                        {% endif %}
+                    </tr>
+    
+                    </tr>
+                    <tr>
+                        <th>
+                            Grand Total: Rs.{{gt}}
+                        </th>
+                    </tr>
+                    
+                  
+                </tbody>
+            </table>
+            <br>
+    </div>
+        
+        <div class="container">
+          
+            <table>
                 <thead>
                     <tr>
-                        <th>{{col1.0}}</th>
-                        <th>{{col1.1}}</th>
-                        <th>{{col1.2}}</th>
+                        <th> IR No</th>
+                        <th> Total Amount</th>
                     </tr>
-            
-                
-            </thead>
-
-            <tbody>
-                <tr>
-                    {% if ir_data %}
-                    {%for ir in ir_data %}
-                        <td>
-                            {{ir}}
-                        </td>
-                    {% endfor %}
-                
-                <tr>
-                    {% endif %}
-
-                    {% if ml_data%}
                     
-                    {%for ml in ml_data %}
-                    <td>
-                        {{ml}}
-                    </td>
-                    {% endfor %}
-                    {% endif %}
-
-                </tr>
-                
-                <tr>
-                    {% if gl_data%}
-                    {%for gl in gl_data %}
-                        <td>
-                            {{gl}}
-                        </td>
-                    {% endfor %}
-                    {%  endif %}
-                </tr>
-                <tr>
-                    {% if id_data %}
-                    {%for il in id_data %}
-                        <td>
-                            {{il}}
-                        </td>
-                    {% endfor %}
-                    {% endif %}
-                </tr>
-
-                <tr>
-                    {% if donation_amt%}
-                    {% for d in donation_amt %}
-                        <td>
-                            {{d}}
-                        </td>
-                       
-                    {%  endfor %}
-
-                    {% endif %}
-                </tr>
-
-                </tr>
-                <tr>
-                    <th>
-                        Grand Total: Rs.{{gt}}
-                    </th>
-                </tr>
-                
-              
-            </tbody>
-        </table>
-        <br>
-</div>
-    <div class="containerB">
-        <table>
-            <thead>
-                <tr>
-                    <th> IL No</th>
-                    <th> Total Amount</th>
-                </tr>
-                
-                
-            </thead>
-            <tbody>
-                <tr>
-                    {% if items_sold %}
-                    {% for rc,amt in items_sold%}
+                    
+                </thead>
+                <tbody>
+                    {% if irumudi_sold %}
                     <tr>
-                        <td>
-                            {{rc}}
-    
-                        </td>
-                        <td>
-                            {{amt}}
-                        </td>
-
-                    </tr>
-                
-                {% endfor %}
-                {% endif %}
-                
-            </tbody>
-            </table>
-    </div>
-    <div class="containerC">
-      
-        <table>
-            <thead>
-                <tr>
-                    <th> IR No</th>
-                    <th> Total Amount</th>
-                </tr>
-                
-                
-            </thead>
-            <tbody>
-                {% if irumudi_sold %}
-                <tr>
-                    {% for rc,amt in irumudi_sold%}
-                    <tr>
-                        <td>
-                            {{rc}}
-    
-                        </td>
-                        <td>
-                            {{amt}}
-                        </td>
-
-                    </tr>
+                        {% for rc,amt in irumudi_sold%}
+                        <tr>
+                            <td>
+                                {{rc}}
         
-                {% endfor %}
-                {% endif %}
-            </tbody>
-            </table>
-
-
+                            </td>
+                            <td>
+                                {{amt}}
+                            </td>
+    
+                        </tr>
+            
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+                </table>
+    
+    
+        </div>
+        <div class="container">
+            <table>
+                <thead>
+                    <tr>
+                        <th> IL No</th>
+                        <th> Total Amount</th>
+                    </tr>
+                    
+                    
+                </thead>
+                <tbody>
+                    <tr>
+                        {% if items_sold %}
+                        {% for rc,amt in items_sold%}
+                        <tr>
+                            <td>
+                                {{rc}}
+        
+                            </td>
+                            <td>
+                                {{amt}}
+                            </td>
+    
+                        </tr>
+                    
+                    {% endfor %}
+                    {% endif %}
+                    
+                </tbody>
+                </table>
+        </div>
+        
+        <div class="container">
+     
+            <table>
+                <thead>
+                    <tr>
+                        <th> DN No</th>
+                        <th> Total Amount</th>
+                    </tr>
+                    
+                    
+                </thead>
+                <tbody>
+                    {% if donation_values %}
+                    <tr>
+                        {% for rc,amt in donation_values %}
+                        <tr>
+                            <td>
+                                {{rc}}
+        
+                            </td>
+                            <td>
+                                {{amt}}
+                            </td>
+    
+                        </tr>
+            
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+                </table>
+        </div>
+       
     </div>
-
-    <div class="containerd" >
-
+    <div class="container_end" >
         <table>
             <thead>
                 <tr>
@@ -255,15 +296,13 @@
                     </tr>
 
                 </tr>
-                
-
-
             </tbody>
             
 
         </table>
 
     </div>
+
     <div >
 
         <table>
@@ -277,12 +316,10 @@
             </thead>
         </table>
     </div>
-     
-    
-   
-    
 
     {% endif %}
+
+    
     
 {% endblock %}
 </body>

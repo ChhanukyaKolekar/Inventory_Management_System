@@ -298,7 +298,7 @@ def expenses(request):
 
         gc_result=gc_fun(from_Date,to_Date)
         
-        donation_lst=donate_fun(from_Date,to_Date)
+        donation_lst,donation_info=donate_fun(from_Date,to_Date)
         donate_amt=donation_lst[2]
         print("...............total_d",donate_amt)
         zipped_data=[ir_result,ml_result,gc_result,il_result]
@@ -317,7 +317,7 @@ def expenses(request):
 
         # net_total_today=daily_fun(net_result)
 
-        return render(request,'temple_app/report_table.html',{"ir_data":ir_result,'ml_data': ml_result,"gl_data":gc_result, "id_data":il_result,"col1":col1,"from_date":from_Date,"to_date":to_Date,"items_sold":il_cash_value,"irumudi_sold":ir_cash_value,"gt":grand_total_,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_result,"col2":col2,"donation_amt":donation_lst})
+        return render(request,'temple_app/report_table.html',{"ir_data":ir_result,'ml_data': ml_result,"gl_data":gc_result, "id_data":il_result,"col1":col1,"from_date":from_Date,"to_date":to_Date,"items_sold":il_cash_value,"irumudi_sold":ir_cash_value,"gt":grand_total_,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_result,"col2":col2,"donation_amt":donation_lst,"donation_values":donation_info})
     
     return render(request,'temple_app/cash_report.html',{'my_rcpts':pass_data})
     
@@ -657,7 +657,7 @@ def donate_fun(from_date,to_date):
         total_donation+=amt
     print(total_donation)
     donation_list=[(start_index,end_index),db_count,total_donation]
-    return donation_list
+    return donation_list,db_values
    
 
 
