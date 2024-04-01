@@ -13,7 +13,8 @@ urlpatterns = [
     path("expenditure",views.expense,name="exp_entry"),
     path('schd_dates/', views.scheduled_irumudi ,name='scheduled_list'),
     # path('irumudi_record/irumudi_record/', views.record_tabel ,name='records_page'),
-    path('pdf/',views.generate_pdf,name="gen_pdf")
+    path('pdf/',views.generate_pdf,name="gen_pdf"),
+    path('donations/',views.donate,name="donate")
 
 
 ]

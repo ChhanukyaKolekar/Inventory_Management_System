@@ -3,7 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
-from . models import inventory_items_stock,Irumudi_bookig_receipt, Maaladharane, Ghee_Coconut, Items_sold_rcpt, Expenses, Daily_Expense
+from . models import inventory_items_stock,Irumudi_bookig_receipt, Maaladharane, Ghee_Coconut, Items_sold_rcpt, Expenses, Daily_Expense, Donations
 # Create your views here.
 from datetime import datetime
 from django.contrib import messages
@@ -298,20 +298,26 @@ def expenses(request):
 
         gc_result=gc_fun(from_Date,to_Date)
         
+        donation_lst=donate_fun(from_Date,to_Date)
+        donate_amt=donation_lst[2]
+        print("...............total_d",donate_amt)
         zipped_data=[ir_result,ml_result,gc_result,il_result]
         
         grand_total_=0
         for i in zipped_data:
             grand_total_+=fetch_2_index(i)
 
+        grand_total_+=donate_amt
         net_result,exp_values,exp_grand_total=exp_fun(from_Date,to_Date,grand_total_)
 
         col1=["Receipt Range","Sold","Total Cost"]
+        col2=["Receipt Range","Total Donation"]
+
         print(ir_result,ml_result,gc_result,il_result, grand_total_)
 
-        net_total_today=daily_fun(net_result)
-      
-        return render(request,'temple_app/report_table.html',{"ir_data":ir_result,'ml_data': ml_result,"gl_data":gc_result, "id_data":il_result,"col1":col1,"from_date":from_Date,"to_date":to_Date,"items_sold":il_cash_value,"irumudi_sold":ir_cash_value,"gt":grand_total_,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_total_today})
+        # net_total_today=daily_fun(net_result)
+
+        return render(request,'temple_app/report_table.html',{"ir_data":ir_result,'ml_data': ml_result,"gl_data":gc_result, "id_data":il_result,"col1":col1,"from_date":from_Date,"to_date":to_Date,"items_sold":il_cash_value,"irumudi_sold":ir_cash_value,"gt":grand_total_,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_result,"col2":col2,"donation_amt":donation_lst})
     
     return render(request,'temple_app/cash_report.html',{'my_rcpts':pass_data})
     
@@ -346,6 +352,29 @@ def scheduled_irumudi(request):
         return render (request, 'temple_app/table_record.html',{'data_list':fetch_data,'key_set':key_col,'text':message,'from_date':from_date,'to_date':to_date})    
 
     return render(request,'temple_app/scheduled_list_irumudi.html')
+
+def donate(request):
+    rcpt_title="Donation"
+    if request.method=="POST":
+        data=request.POST
+        Customer_Name=data.get("Customer_Name")
+        Contact=data.get("Contact")
+        Amount_Paid=data.get("Amount_Paid")
+
+        database_obj=Donations.objects
+        Receipt_Number="DN-" + str(database_obj.count()+ 1 + 1000)
+        store_to_db=database_obj.create(Receipt_Number=Receipt_Number,Customer_Name=Customer_Name,Contact=Contact,Amount_Paid=Amount_Paid)
+        donation_db=database_obj.filter(Receipt_Number=Receipt_Number)
+        donation_info=donation_db.values("Receipt_Number","Customer_Name","Contact","Amount_Paid")[0]
+        rcpt_no=donation_db.values("Receipt_Number")[0]["Receipt_Number"]
+
+        pr_date=donation_db.values("Date")[0]["Date"]
+        out=generate_pdf(rcpt_title,rcpt_no,pr_date,donation_info)
+        print(donation_db)
+        return out
+       
+    return render(request,'temple_app/donation.html')
+
 
 def generate_pdf(rcpt_title, rcpt_no,current_date,query_data,total_amt=None,col_name_list=None,table=False):
     
@@ -612,6 +641,24 @@ def daily_fun(net_balance):
         print(curr_net_balnce)
         return curr_net_balnce
     
+def donate_fun(from_date,to_date):
+    fetch_data=Donations.objects.filter(Date__range=(from_date,to_date))
+    if not fetch_data.exists():
+        return None
+    print("Donation Available")
+    db_values=fetch_data.values_list("Receipt_Number","Amount_Paid")
+    db_count=fetch_data.count()
+    db_end_index=db_count-1
+    total_donation=0
+    start_index=db_values[0][0]
+    end_index=db_values[db_end_index][0]
+
+    for rc,amt in db_values:
+        total_donation+=amt
+    print(total_donation)
+    donation_list=[(start_index,end_index),db_count,total_donation]
+    return donation_list
+   
 
 
 def fetch_2_index(list_of_lists):

@@ -127,6 +127,18 @@
                     {% endif %}
                 </tr>
 
+                <tr>
+                    {% if donation_amt%}
+                    {% for d in donation_amt %}
+                        <td>
+                            {{d}}
+                        </td>
+                       
+                    {%  endfor %}
+
+                    {% endif %}
+                </tr>
+
                 </tr>
                 <tr>
                     <th>
@@ -252,7 +264,7 @@
         </table>
 
     </div>
-    <div class="containerE">
+    <div >
 
         <table>
             <thead>
@@ -267,6 +279,7 @@
     </div>
      
     
+   
     
 
     {% endif %}

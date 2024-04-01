@@ -89,4 +89,13 @@ class Daily_Expense(models.Model):
         self.Income+=today_balance
         self.save()
 
-    
+
+class Donations(models.Model):
+    Receipt_Number = models.CharField(max_length=20, unique=True)
+    Date=models.DateField(default=datetime.date.today)
+    Customer_Name=models.CharField(max_length=100)
+    Contact=models.TextField()
+    Amount_Paid=models.IntegerField()
+
+    def __str__(self):
+        return self.Receipt_Number
