@@ -44,7 +44,6 @@
     
     table {
         padding: 20px;
-  
         border-collapse: collapse;
         width: 100%;
   
@@ -88,6 +87,8 @@
                             <th>{{col1.0}}</th>
                             <th>{{col1.1}}</th>
                             <th>{{col1.2}}</th>
+                            <th>{{col1.3}}</th>
+                            <th>{{col1.4}}</th>
                         </tr>
                 
                     
@@ -167,6 +168,8 @@
                     <tr>
                         <th> IR No</th>
                         <th> Total Amount</th>
+                        <th>{{col1.3}}</th>
+                        <th>{{col1.4}}</th>
                     </tr>
                     
                     
@@ -174,7 +177,7 @@
                 <tbody>
                     {% if irumudi_sold %}
                     <tr>
-                        {% for rc,amt in irumudi_sold%}
+                        {% for rc,amt,csh,upi in irumudi_sold%}
                         <tr>
                             <td>
                                 {{rc}}
@@ -182,6 +185,13 @@
                             </td>
                             <td>
                                 {{amt}}
+                            </td>
+                            <td>
+                                {{csh}}
+
+                            </td>
+                            <td>
+                                {{upi}}
                             </td>
     
                         </tr>
@@ -199,6 +209,8 @@
                     <tr>
                         <th> IL No</th>
                         <th> Total Amount</th>
+                        <th>{{col1.3}}</th>
+                        <th>{{col1.4}}</th>
                     </tr>
                     
                     
@@ -206,7 +218,7 @@
                 <tbody>
                     <tr>
                         {% if items_sold %}
-                        {% for rc,amt in items_sold%}
+                        {% for rc,amt,csh,upi in items_sold%}
                         <tr>
                             <td>
                                 {{rc}}
@@ -215,6 +227,8 @@
                             <td>
                                 {{amt}}
                             </td>
+                            <td>{{csh}}</td>
+                            <td>{{upi}}</td>
     
                         </tr>
                     

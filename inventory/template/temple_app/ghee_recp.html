@@ -67,6 +67,12 @@
         font-family: Arial,sans-serif; 
         color: #080b33;
     }
+    .radio_cont {
+        margin-right: 10px;
+        margin-inline-start: 10px;
+        display: inline-block;
+        
+    }
 </style>
 
 <body>
@@ -87,7 +93,19 @@
             
             <label for="cust_name">Customer Name:</label>
             <input type="text" id="cust_name" name="Customer_Name" required>
+            <br>
     
+            <label for="pay_mode">Payment Mode:</label>
+          
+            <div class="radio_cont">                
+                <input type="radio" id="payment_cash" name="Payment_Mode" value="cash" class="radio-custom">
+                <label for="payment_cash">Cash</label>
+            </div>
+            <div class="radio_cont">
+                <input type="radio" id="payment_upi" name="Payment_Mode" value="upi" class="radio-custom">
+                <label for="payment_upi">UPI</label>
+            </div>
+            
             <button type="submit" name="submit_button">Save and Print</button>
             
         </form>

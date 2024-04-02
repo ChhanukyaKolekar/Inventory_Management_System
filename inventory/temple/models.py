@@ -37,10 +37,30 @@ class Irumudi_bookig_receipt(models.Model):
     Amount_Paid=models.IntegerField()
     Balance=models.IntegerField()
     Total_Amount=models.IntegerField()
+    Balance_Clear_Date=models.DateField(null=True,blank=True)
+    Balance_Amount_Paid=models.IntegerField(default=0)
+    Cash=models.IntegerField(default=0)
+    UPI=models.IntegerField(default=0)
 
     def amount_update(self,ap_value):
         self.Amount_Paid+=ap_value
-        self.Balance-=ap_value
+        self.Balance=self.Balance-ap_value
+        self.save()
+
+    def clear_date(self,paid_date):
+        self.Balance_Clear_Date=paid_date
+        self.save()
+
+    def balance_paid(self,paid_amt):
+        self.Balance_Amount_Paid+=paid_amt
+        self.save()
+
+    def cash_mode(self,paid_amt):
+        self.Cash+=paid_amt
+        self.save()
+
+    def upi_mode(self,paid_amt): 
+        self.UPI+=paid_amt
         self.save()
 
     def __str__(self):
@@ -51,12 +71,34 @@ class Maaladharane(models.Model):
     Customer_Name=models.CharField(max_length=100)
     Date=models.DateField(default=datetime.date.today)
     Total_Amount=models.IntegerField(default=15)
+    Cash=models.IntegerField(default=0)
+    UPI=models.IntegerField(default=0)
+
+    def update_cash(self):
+        self.Cash=15
+        self.save()
+
+    def update_upi(self):
+        self.UPI=15
+        self.save()
 
 class Ghee_Coconut(models.Model):
     Receipt_Number = models.CharField(max_length=20, unique=True)
     Customer_Name=models.CharField(max_length=100)
     Date=models.DateField(default=datetime.date.today)
     Total_Amount=models.IntegerField(default=130)
+    Cash=models.IntegerField(default=0)
+    UPI=models.IntegerField(default=0)
+
+    def update_cash(self):
+        self.Cash=130
+        self.save()
+
+    def update_upi(self):
+        self.UPI=130
+        self.save()
+
+
 
 class Temple_seva_receipt(models.Model):
     Seva_Type=models.CharField(max_length=250)
@@ -74,6 +116,16 @@ class Items_sold_rcpt(models.Model):
     Date=models.DateField(default=datetime.date.today)
     Product_name=models.TextField()
     Total_Amount=models.IntegerField()
+    Cash=models.IntegerField(default=0)
+    UPI=models.IntegerField(default=0)
+
+    def update_cash(self,paid_amt):
+        self.Cash=paid_amt
+        self.save()
+
+    def update_upi(self,paid_amt):
+        self.UPI=paid_amt
+        self.save()
 
 class Expenses(models.Model):
     Date=models.DateField(default=datetime.date.today)

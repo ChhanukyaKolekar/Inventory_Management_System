@@ -60,22 +60,23 @@ def add_items(request):
     return render(request,'temple_app/add_items_list.html',{'list_of_items':items_list})
 
 def irumudi_book(request):
-
     title="IRUMUDI SCHEDULE"
     cust_data=Irumudi_bookig_receipt.objects
     data=request.POST
     data_recvd={}
     if request.method=="POST":
         my_data={}
+
         Receipt_Number="IR-" + str(cust_data.count()+ 1 + 1000)
         incoming_request=["Receipt_Number","Customer_Name","Contact","Irumudi_Price","Irumudi_Quantity","Schedule_Date","Amount_Paid"]
         for i in incoming_request:
             my_data[i]=data.get(i)
             if i=="Receipt_Number":
                 my_data[i]=Receipt_Number
-      
+
         total_amount=int(my_data["Irumudi_Price"])*int(my_data["Irumudi_Quantity"])
-        balance=total_amount-int(my_data["Amount_Paid"])
+        amt_paid=int(my_data["Amount_Paid"])
+        balance=total_amount-amt_paid
         
 
         calculated_data=["Total_Amount","Balance"]
@@ -84,10 +85,17 @@ def irumudi_book(request):
         for k,v in zip(calculated_data,str_calculated_data):
             my_data[k]=v
 
+        pay_mode=data.get("Payment_Mode")
 
         store_to_db=cust_data.create(**my_data)
-
+       
         get_data_db=cust_data.filter(Receipt_Number=Receipt_Number)
+        updating_row=cust_data.get(Receipt_Number=Receipt_Number)
+
+        if pay_mode=="cash":
+            updating_row.cash_mode(paid_amt=amt_paid)
+        else:
+            updating_row.upi_mode(paid_amt=amt_paid)
 
         rcpt=get_data_db.values("Receipt_Number")[0]["Receipt_Number"]
 
@@ -149,6 +157,8 @@ def items_list_(request):
             database_obj=Items_sold_rcpt.objects
             Receipt_Number="IL-" + str(database_obj.count()+ 1 + 1000)  
             item_content=request.session
+            pay_mode=request.POST.get("Payment_Mode")
+
             total_amount=int()
             product_name=""
             for  key,value in item_content.items():
@@ -158,7 +168,13 @@ def items_list_(request):
 
             
             store_to_db=database_obj.create(Receipt_Number=Receipt_Number,Total_Amount=total_amount,Product_name=product_name)
-            
+            update_row=database_obj.get(Receipt_Number=Receipt_Number)
+
+            if pay_mode=="cash":
+                update_row.update_cash(paid_amt=total_amount)
+            else:
+                update_row.update_upi(paid_amt=total_amount)
+
             fetch_date=database_obj.filter(Receipt_Number=Receipt_Number).values("Date")[0]["Date"]
             
             output_file=generate_pdf(title,Receipt_Number,fetch_date,item_content,total_amount,col_list,table)
@@ -182,13 +198,17 @@ def maaladharane(request):
         data=request.POST
 
         Customer_Name=data.get("Customer_Name")
-
+        pay_mode=data.get("Payment_Mode")
         Receipt_Number="MD-" + str(database_obj.count()+ 1 + 1000)
     
         store_to_db=database_obj.create(Customer_Name=Customer_Name,Receipt_Number=Receipt_Number)
         
         get_data_db=database_obj.filter(Receipt_Number=Receipt_Number)
-        
+        update_row=database_obj.get(Receipt_Number=Receipt_Number)
+        if pay_mode=="cash":
+            update_row.update_cash()
+        else:
+            update_row.update_upi()
         cust_info=get_data_db.values("Receipt_Number","Customer_Name","Total_Amount")[0]
         rcpt_no=get_data_db.values("Receipt_Number")[0]["Receipt_Number"]
 
@@ -209,13 +229,18 @@ def ghee(request):
         data=request.POST
 
         Customer_Name=data.get("Customer_Name")
+        pay_mode=data.get("Payment_Mode")
 
         Receipt_Number="GC-" + str(database_obj.count()+ 1 + 1000)
     
         store_to_db=database_obj.create(Customer_Name=Customer_Name,Receipt_Number=Receipt_Number)
         
         get_data_db=database_obj.filter(Receipt_Number=Receipt_Number)
-        
+        update_row=database_obj.get(Receipt_Number=Receipt_Number)
+        if pay_mode=="cash":
+            update_row.update_cash()
+        else:
+            update_row.update_upi()
         cust_info=get_data_db.values("Receipt_Number","Customer_Name","Total_Amount")[0]
         rcpt_no=get_data_db.values("Receipt_Number")[0]["Receipt_Number"]
 
@@ -271,9 +296,19 @@ def irumudi_register(request):
         rx_rcpt=request.session["Receipt_no"]
         due=int(request.POST.get("Balance"))
         # print(rx_rcpt,due)
+        pay_mode=request.POST.get("Payment_Mode")
+        prsent=datetime.now()
+        pr_date=prsent.date()
 
-        update_balance=Irumudi_bookig_receipt.objects.get(Receipt_Number=rx_rcpt).amount_update(ap_value=due)
-       
+        update_row=Irumudi_bookig_receipt.objects.get(Receipt_Number=rx_rcpt)
+        update_amt_paid=update_row.amount_update(ap_value=due)
+
+        update_bal_date=update_row.clear_date(paid_date=pr_date)
+        update_bal_paid=update_row.balance_paid(paid_amt=due)
+        if pay_mode=="cash":
+            update_row.cash_mode(paid_amt=due)
+        else:
+            update_row.upi_mode(paid_amt=due)
         messages.success(request,f" Amount of Rs.{due} Paid ")
         return redirect('/irumudi_record')
     request.session.clear()
@@ -282,25 +317,27 @@ def irumudi_register(request):
 
 def expenses(request):
     pass_data=["Irumudi","Maaladharane","Ghee/Coconut","Materials"]
-   
 
     if request.method=="POST":
-        data=request.POST
-        
+        data=request.POST        
         from_Date=data.get("from_Date")
         to_Date=data.get("to_Date")
 
         ir_result,ir_cash_value=ir_fun(from_Date,to_Date)
-
+        print("fun result",ir_result)
         ml_result=mal_fun(from_Date,to_Date)
 
         il_result,il_cash_value=il_fun(from_Date,to_Date)
 
         gc_result=gc_fun(from_Date,to_Date)
-        
+        # print(gc_result)
         donation_lst,donation_info=donate_fun(from_Date,to_Date)
-        donate_amt=donation_lst[2]
-        print("...............total_d",donate_amt)
+
+        if donation_lst!=None:
+            donate_amt=donation_lst[2]
+        else:
+            donate_amt=0
+        # print("...............total_d",donate_amt)
         zipped_data=[ir_result,ml_result,gc_result,il_result]
         
         grand_total_=0
@@ -310,7 +347,7 @@ def expenses(request):
         grand_total_+=donate_amt
         net_result,exp_values,exp_grand_total=exp_fun(from_Date,to_Date,grand_total_)
 
-        col1=["Receipt Range","Sold","Total Cost"]
+        col1=["Receipt Range","Sold","Total Cost","Cash","UPI"]
         col2=["Receipt Range","Total Donation"]
 
         print(ir_result,ml_result,gc_result,il_result, grand_total_)
@@ -451,35 +488,78 @@ def generate_pdf(rcpt_title, rcpt_no,current_date,query_data,total_amt=None,col_
 
 
 def ir_fun(from_date,to_date):
-    try:
-        irumudi_cash=Irumudi_bookig_receipt.objects.all().filter(Booking_Date__range=(from_date,to_date))
-        if not irumudi_cash.exists():
-            irumudi_list=[]
-            return irumudi_list,None
+    # try:
+    irumudi_cash=Irumudi_bookig_receipt.objects.all().filter(Booking_Date__range=(from_date,to_date))
+    irumudi_2_cash=Irumudi_bookig_receipt.objects.all().filter(Balance_Clear_Date__range=(from_date,to_date))
+    print("I AWS CALLED IR",irumudi_2_cash,irumudi_cash)
 
-    except:
-        irumudi_cash=Irumudi_bookig_receipt.objects.all().filter(Booking_Date=from_date)
-        if not irumudi_cash.existst():
-            irumudi_list=[]
-            return irumudi_list,None
+    if irumudi_cash.exists():
+        irumudi_sale_count=irumudi_cash.count()
+        irumudi_cash_values=irumudi_cash.values_list("Receipt_Number","Balance_Amount_Paid","Cash","UPI")
+        #print(irumudi_cash_values)
+
+        end_index=irumudi_sale_count-1
+        start_rcpt=irumudi_cash_values[0][0]
+        end_rcpt=irumudi_cash_values[end_index][0]
+
+        total_cost_in_set_period=0
+        cash_amt=0
+        upi_amt=0
+        for key,val,csh,upi in irumudi_cash_values:
+            total_cost_in_set_period+=val
+            cash_amt+=csh
+            upi_amt+=upi
+            # print(key,val)
+        irumudi_list=[(start_rcpt,end_rcpt),irumudi_sale_count,total_cost_in_set_period,cash_amt,upi_amt]
+        # print(start_rcpt,end_rcpt,irumudi_sale_count,total_cost_in_set_period)
+        return irumudi_list,irumudi_cash_values
+    # elif not irumudi_cash.exists():    
+    #     irumudi_list=[]
+    #     return irumudi_list,None
+    
+    if irumudi_2_cash.exists():
+        print("2 was called ")
+        irumudi_sale_count=irumudi_2_cash.count()
+        irumudi_cash_values=irumudi_2_cash.values_list("Receipt_Number","Amount_Paid","Cash","UPI")
+        #print(irumudi_cash_values)
+
+        end_index=irumudi_sale_count-1
+        start_rcpt=irumudi_cash_values[0][0]
+        end_rcpt=irumudi_cash_values[end_index][0]
+
+        total_cost_in_set_period=0
+        cash_amt=0
+        upi_amt=0
+        for key,val,csh,upi in irumudi_cash_values:
+            total_cost_in_set_period+=val
+            cash_amt+=csh
+            upi_amt+=upi
+            # print(key,val)
+        irumudi_list=[(start_rcpt,end_rcpt),irumudi_sale_count,total_cost_in_set_period,cash_amt,upi_amt]
+        # print(start_rcpt,end_rcpt,irumudi_sale_count,total_cost_in_set_period)
+        return irumudi_list,irumudi_cash_values
+    
+    if not irumudi_2_cash.exists() or irumudi_cash.exists():
+        irumudi_list=[]
+        irumudi_cash_values=[]
+        return irumudi_list,irumudi_cash_values
+    
+
+    # except:
+    #     irumudi_cash=Irumudi_bookig_receipt.objects.all().filter(Booking_Date=from_date)
+    #     if not irumudi_cash.existst():
+    #         irumudi_list=[]
+    #         return irumudi_list,None
         
-    irumudi_sale_count=irumudi_cash.count()
-    irumudi_cash_values=irumudi_cash.values_list("Receipt_Number","Amount_Paid")
-    #print(irumudi_cash_values)
+    # try:
+    
+    # except:
+    #      irumudi_2_cash=Irumudi_bookig_receipt.objects.all().filter(Balance_Clear_Date=from_date)
+    #      if not irumudi_2_cash.existst():
+    #         irumudi_list=[]
 
-    end_index=irumudi_sale_count-1
-    start_rcpt=irumudi_cash_values[0][0]
-    end_rcpt=irumudi_cash_values[end_index][0]
-    total_cost_in_set_period=0
 
-    for key,val in irumudi_cash_values:
-        total_cost_in_set_period+=val
-        # print(key,val)
-
-    irumudi_list=[(start_rcpt,end_rcpt),irumudi_sale_count,total_cost_in_set_period]
-    return irumudi_list,irumudi_cash_values
-    print(start_rcpt,end_rcpt,irumudi_sale_count,total_cost_in_set_period)
-
+    # balance_amt_cleared=irumudi_2_cash.values_list("Balance_Amount_Paid")
 
 def mal_fun(from_date,to_date):
     ## MAALADHARANE
@@ -497,7 +577,7 @@ def mal_fun(from_date,to_date):
         
     maaladharane_cash_count=maaladharane_cash.count()
 
-    maaladharane_cash_values=maaladharane_cash.values_list("Receipt_Number","Date","Total_Amount")
+    maaladharane_cash_values=maaladharane_cash.values_list("Receipt_Number","Date","Total_Amount","Cash","UPI")
 
     maaladharane_end_index=maaladharane_cash_count-1
 
@@ -505,11 +585,16 @@ def mal_fun(from_date,to_date):
     maaladharane_end_rcpt=maaladharane_cash_values[maaladharane_end_index][0]
 
     total_cost_maaladharne=0
-    for k,v,amt in maaladharane_cash_values:
-        total_cost_maaladharne+=amt
+    cash_amt=0
+    upi_amt=0
 
-    print(maaladharane_start_rcpt,maaladharane_end_rcpt,maaladharane_cash_count,total_cost_maaladharne)
-    maaladharane_list=[(maaladharane_start_rcpt,maaladharane_end_rcpt),maaladharane_cash_count,total_cost_maaladharne]    
+    for k,v,amt,csh,upi in maaladharane_cash_values:
+        total_cost_maaladharne+=amt
+        cash_amt+=csh
+        upi_amt+=upi
+
+    # print(maaladharane_start_rcpt,maaladharane_end_rcpt,maaladharane_cash_count,total_cost_maaladharne)
+    maaladharane_list=[(maaladharane_start_rcpt,maaladharane_end_rcpt),maaladharane_cash_count,total_cost_maaladharne,cash_amt,upi_amt]    
     return maaladharane_list
 
 def il_fun(from_date,to_date):
@@ -528,22 +613,28 @@ def il_fun(from_date,to_date):
 
     items_sold_rcpt_cash_count=items_sold_rcpt_cash.count()
 
-    items_sold_rcpt_cash_values=items_sold_rcpt_cash.values_list("Receipt_Number","Total_Amount")
+    items_sold_rcpt_cash_values=items_sold_rcpt_cash.values_list("Receipt_Number","Total_Amount","Cash","UPI")
 
     items_sold_end_index=items_sold_rcpt_cash_count-1
-    print(items_sold_rcpt_cash_values)
+    # print(items_sold_rcpt_cash_values)
 
     items_startindex=items_sold_rcpt_cash_values[0][0]
 
     items_endindex=items_sold_rcpt_cash_values[items_sold_end_index][0]
 
     total_cost_items=0
-    for k,v in items_sold_rcpt_cash_values:
-        total_cost_items+=v
+    cash_amt=0
+    upi_amt=0
 
-    print(items_startindex,items_endindex,items_sold_rcpt_cash_count,total_cost_items)
+    for k,v,csh,upi in items_sold_rcpt_cash_values:
+        total_cost_items+=v
+        cash_amt+=csh
+        upi_amt+=upi
+
+
+    # print(items_startindex,items_endindex,items_sold_rcpt_cash_count,total_cost_items)
     
-    items_data_list=[(items_startindex,items_endindex),items_sold_rcpt_cash_count,total_cost_items]
+    items_data_list=[(items_startindex,items_endindex),items_sold_rcpt_cash_count,total_cost_items,cash_amt,upi_amt]
     return items_data_list,items_sold_rcpt_cash_values
 
 def gc_fun(from_date,to_date):
@@ -563,7 +654,7 @@ def gc_fun(from_date,to_date):
 
     gc_cash_count=gc_cash.count()
 
-    gc_cash_values=gc_cash.values_list("Receipt_Number","Date","Total_Amount")
+    gc_cash_values=gc_cash.values_list("Receipt_Number","Date","Total_Amount","Cash","UPI")
 
     gc_end_index=gc_cash_count-1
 
@@ -571,29 +662,33 @@ def gc_fun(from_date,to_date):
     gc_end_rcpt=gc_cash_values[gc_end_index][0]
 
     total_cost_gc=0
-    for k,v,amt in gc_cash_values:
-        total_cost_gc+=amt
+    cash_amt=0
+    upi_amt=0
 
-    print(gc_start_rcpt,gc_end_rcpt,gc_cash_count,total_cost_gc)
-    gc_list=[(gc_start_rcpt,gc_end_rcpt),gc_cash_count,total_cost_gc]    
+    for k,v,amt,csh,upi in gc_cash_values:
+        total_cost_gc+=amt
+        cash_amt+=csh
+        upi_amt+=upi
+    # print(gc_start_rcpt,gc_end_rcpt,gc_cash_count,total_cost_gc)
+    gc_list=[(gc_start_rcpt,gc_end_rcpt),gc_cash_count,total_cost_gc,cash_amt,upi_amt]    
     return gc_list
 
 def exp_fun(from_date,to_date,grand_total):
     try:
         exp_data=Expenses.objects.all().filter(Date__range=(from_date,to_date))
         if not exp_data.exists():
-            return None,None,None
+            return grand_total,None,None
     except:
         exp_data=Expenses.objects.all().filter(Date=from_date)
         if not exp_data.exists():
-            return None,None,None
+            return grand_total,None,None
 
     exp_values=exp_data.values_list("Description","Amount")
     exp_grand_total=0
 
     for k,v in exp_values:
         exp_grand_total+=v
-        print(k,v)
+        # print(k,v)
 
     net_balance=grand_total-exp_grand_total
     return net_balance,exp_values,exp_grand_total
@@ -644,7 +739,7 @@ def daily_fun(net_balance):
 def donate_fun(from_date,to_date):
     fetch_data=Donations.objects.filter(Date__range=(from_date,to_date))
     if not fetch_data.exists():
-        return None
+        return None,None
     print("Donation Available")
     db_values=fetch_data.values_list("Receipt_Number","Amount_Paid")
     db_count=fetch_data.count()
