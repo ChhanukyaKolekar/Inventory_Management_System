@@ -27,7 +27,7 @@
 
     .main_container {
         display: flex; 
-        justify-content: 
+        justify-content:left;
       }
     .container {
         width: 30%;
@@ -35,18 +35,26 @@
         
       }
     .container_end{
-        width: 50%;
-        margin: 10px; 
+        display: inline-flex;
+        width: 65%;
+        margin: 5px; 
+        margin-right: 10px
+      
         
     }
   
+    .cont_end{
+        width: 30%;
+        margin: 10px; 
 
+    }
     
     table {
         padding: 20px;
         border-collapse: collapse;
         width: 100%;
-  
+        font-size:small;
+        
     }
     th, td {
         border: 1px solid black;
@@ -54,10 +62,12 @@
         text-align: center;
     }
     th {
-        background-color: #f2f2f2;
+        background-color: #10dfff;
+        
       }
       td{
-        background-color: #0ad2fa;
+        background-color: #ffffff;
+       
     
       }
 
@@ -81,7 +91,6 @@
     <div class="main_container">
         <div class="container">   
             <table >
-    
                     <thead>
                         <tr>
                             <th>{{col1.0}}</th>
@@ -97,63 +106,80 @@
                 <tbody>
                     <tr>
                         {% if ir_data %}
-                        {%for ir in ir_data %}
-                            <td>
-                                {{ir}}
-                            </td>
-                        {% endfor %}
-                    
-                    <tr>
+                            {%for ir in ir_data %}
+                                <td>
+                                    {{ir}}
+                                </td>
+                            {% endfor %}
                         {% endif %}
-    
+                    </tr>
+
+                    <tr>
+   
                         {% if ml_data%}
                         
-                        {%for ml in ml_data %}
-                        <td>
-                            {{ml}}
-                        </td>
-                        {% endfor %}
+                            {%for ml in ml_data %}
+                            <td>
+                                {{ml}}
+                            </td>
+                            {% endfor %}
                         {% endif %}
     
                     </tr>
                     
                     <tr>
                         {% if gl_data%}
-                        {%for gl in gl_data %}
-                            <td>
-                                {{gl}}
-                            </td>
-                        {% endfor %}
+                            {%for gl in gl_data %}
+                                <td>
+                                    {{gl}}
+                                </td>
+                            {% endfor %}
                         {%  endif %}
                     </tr>
                     <tr>
                         {% if id_data %}
-                        {%for il in id_data %}
-                            <td>
-                                {{il}}
-                            </td>
-                        {% endfor %}
+                            {%for il in id_data %}
+                                <td>
+                                    {{il}}
+                                </td>
+                            {% endfor %}
                         {% endif %}
                     </tr>
     
                     <tr>
                         {% if donation_amt%}
-                        {% for d in donation_amt %}
-                            <td>
-                                {{d}}
-                            </td>
-                           
-                        {%  endfor %}
+                            {% for d in donation_amt %}
+                                <td>
+                                    {{d}}
+                                </td>
+                            
+                            {%  endfor %}
     
                         {% endif %}
                     </tr>
-    
+                    {% if ir_data2  %}
+                    <tr>
+                        {%for ir in ir_data2 %}
+                        <td>
+                           {{ir}}
+                        </td>
+                        {% endfor %}
+                   
+                        {%endif%}
+
                     </tr>
                     <tr>
                         <th>
                             Grand Total: Rs.{{gt}}
                         </th>
+                       <th>
+                        Cash: {{cash_gt_1}}
+                       </th>
+                       <th>
+                        UPI: {{upi_gt_1}}
+                       </th>
                     </tr>
+                
                     
                   
                 </tbody>
@@ -164,6 +190,15 @@
         <div class="container">
           
             <table>
+                <thead>
+                    <th>
+                       <b>
+                        Irumudi Bookings
+    
+                       </b> 
+                    </th>
+                       
+                </thead>
                 <thead>
                     <tr>
                         <th> IR No</th>
@@ -177,7 +212,7 @@
                 <tbody>
                     {% if irumudi_sold %}
                     <tr>
-                        {% for rc,amt,csh,upi in irumudi_sold%}
+                        {% for rc,bcd,amt,csh,upi,advp in irumudi_sold%}
                         <tr>
                             <td>
                                 {{rc}}
@@ -198,6 +233,8 @@
             
                     {% endfor %}
                     {% endif %}
+
+                    
                 </tbody>
                 </table>
     
@@ -206,6 +243,14 @@
         <div class="container">
             <table>
                 <thead>
+                    <thead>
+                        <th>
+                           <b>
+                            Materials
+                           </b> 
+                        </th>
+                           
+                    </thead>
                     <tr>
                         <th> IL No</th>
                         <th> Total Amount</th>
@@ -243,9 +288,19 @@
      
             <table>
                 <thead>
+                    <th>
+                       <b>
+                       Donations
+                       </b> 
+                    </th>
+                       
+                </thead>
+                <thead>
                     <tr>
                         <th> DN No</th>
                         <th> Total Amount</th>
+                        <th>Cash</th>
+                        <th>UPI</th>
                     </tr>
                     
                     
@@ -253,7 +308,7 @@
                 <tbody>
                     {% if donation_values %}
                     <tr>
-                        {% for rc,amt in donation_values %}
+                        {% for rc,amt,csh,upi in donation_values %}
                         <tr>
                             <td>
                                 {{rc}}
@@ -261,6 +316,12 @@
                             </td>
                             <td>
                                 {{amt}}
+                            </td>
+                            <td>
+                                {{csh}}
+                            </td>
+                            <td>
+                                {{upi}}
                             </td>
     
                         </tr>
@@ -272,50 +333,127 @@
         </div>
        
     </div>
-    <div class="container_end" >
-        <table>
-            <thead>
-                <tr>
-                  <th>
-                    Description
-                  </th>
-                  <th>
-                    Total Expense
-                  </th>
     
-                </tr>
-
-            </thead>
-            <tbody>
-                <tr>
-                    {% if exp_values %}
-                    {% for k,v in exp_values%}
-
-                    <tr>
-                        <td>
-                            {{k}}
-                        </td>
-                        <td>
-                            {{v}}
-                        </td>
-
-                    </tr>
-                    {%  endfor %}
-                    {%  endif %}
-                    
-                    <tr>
+    <div class="container_end" >
+        
+            <div class="container_end">
+                <table>
+                    <thead>
+                        <thead>
+                            <th>
+                               <b>
+                               Irumudi Balance Paid Rcpt
+        
+                               </b> 
+                            </th>
+                               
+                        </thead>
+                        
                         <th>
-                            Total Expense: Rs.{{grand_total}}
+                            BRN-NO
                         </th>
-                    </tr>
+                        <th>
+                            Balance Amt Paid
+                        </th>
+                        <th>
+                            Payment Mode
+                        </th>
+                       
+                        <tbody>
+                            {% if irumudi_sold2 %}
+                            <tr>
+                                {% for rc,amt,mode, bkd,bcd in irumudi_sold2%}
+                                <tr> 
+                                    {% if rc is not none %}
+                                        
+                                    
+                                    <td>
+                                       
+                                        {{rc}}
+                
+                                    </td>
+                                    <td>
+                                        {{amt}}
+                                    </td>
+                                    <td>
+                                        {{mode}}
+        
+                                    </td>
+                                    {% endif %}
+                                    
+            
+                                </tr>
+                            </tr>
+                            {% endfor %}
+                            {% endif %}
+                            </tr>
+                        </tbody>
+                    </thead>
+                </table>
+
+            </div>
+            
+            <br>
+            <br>
+       
+    </div>
+   <div class="cont_end">
+    
+    <table>
+        <thead>
+            <th>
+               <b>
+                Expenses
+
+               </b> 
+            </th>
+               
+        </thead>
+        <thead>
+            <tr>
+              <th>
+                Description
+              </th>
+              <th>
+                Total Expense
+              </th>
+              
+
+            </tr>
+
+        </thead>
+        <tbody>
+            <tr>
+                {% if exp_values %}
+                {% for k,v in exp_values%}
+
+                <tr>
+                    <td>
+                        {{k}}
+                    </td>
+                    <td>
+                        {{v}}
+                    </td>
 
                 </tr>
-            </tbody>
-            
+                {%  endfor %}
+                {%  endif %}
+                
+                <tr>
+                    <th>
+                        Total Expense: Rs.{{grand_total}}
+                    </th>
+                </tr>
 
-        </table>
+            </tr>
+        </tbody>
+        
 
-    </div>
+    </table>
+   </div>
+
+
+</tr>
 
     <div >
 
@@ -323,6 +461,7 @@
             <thead>
                 <tr>
                     <th>
+                        Overall Grand Total: Rs.{{ogt}}  <br> <br>
                         Net Balance: Rs.{{net_balance}}
                     </th>
                     
@@ -331,6 +470,7 @@
         </table>
     </div>
 
+    
     {% endif %}
 
     

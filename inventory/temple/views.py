@@ -2,13 +2,14 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render,redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect,FileResponse
+from django.urls import reverse
 from . models import inventory_items_stock,Irumudi_bookig_receipt, Maaladharane, Ghee_Coconut, Items_sold_rcpt, Expenses, Daily_Expense, Donations
 # Create your views here.
 from datetime import datetime
 from django.contrib import messages
 from reportlab.pdfgen import canvas
-
+import os
 global items_list
 items_list=[ "Mala block spatica 6mm",
     "Mala white spatica 6mm",
@@ -45,7 +46,7 @@ def add_items(request):
 
             # item.update_stock_on_sale(4)
             item_creation=item.create(items=item_name,purchase_price=purchase_price,items_sale_price=items_sale_price,items_in_stock=items_in_stock)
-            messages.success(request, 'Your Items were Added successfully')
+            messages.success(request, 'Added successfully')
             return redirect('/update_items')
         else:   
             
@@ -54,7 +55,7 @@ def add_items(request):
             update_row=item.get(items=item_name)
             update_row.update_existing_value(value_update=items_in_stock)
 
-            messages.success(request, 'Your Items were successfully Updated')
+            messages.success(request, 'Updated Successfully ')
             return redirect('/update_items')
        
     return render(request,'temple_app/add_items_list.html',{'list_of_items':items_list})
@@ -66,54 +67,85 @@ def irumudi_book(request):
     data_recvd={}
     if request.method=="POST":
         my_data={}
-
+       
         Receipt_Number="IR-" + str(cust_data.count()+ 1 + 1000)
-        incoming_request=["Receipt_Number","Customer_Name","Contact","Irumudi_Price","Irumudi_Quantity","Schedule_Date","Amount_Paid"]
+        incoming_request=["Receipt_Number","Customer_Name","Contact","Irumudi_Quantity","Schedule_Date","Scheduled_Time","Amount_Paid"]
+        pay_mode=data.get("Payment_Mode")
         for i in incoming_request:
             my_data[i]=data.get(i)
             if i=="Receipt_Number":
                 my_data[i]=Receipt_Number
 
-        total_amount=int(my_data["Irumudi_Price"])*int(my_data["Irumudi_Quantity"])
-        amt_paid=int(my_data["Amount_Paid"])
-        balance=total_amount-amt_paid
-        
+      
+        # total_amount=int(my_data["Irumudi_Price"])*int(my_data["Irumudi_Quantity"])
 
-        calculated_data=["Total_Amount","Balance"]
-        str_calculated_data=[total_amount, balance]
+        # amt_paid=int(my_data["Amount_Paid"])
 
-        for k,v in zip(calculated_data,str_calculated_data):
-            my_data[k]=v
+      
+        # balance=total_amount-amt_paid
+        # calculated_data=["Total_Amount","Balance"]
+        # str_calculated_data=[total_amount, balance]
 
-        pay_mode=data.get("Payment_Mode")
+        # for k,v in zip(calculated_data,str_calculated_data):
+        #     my_data[k]=v
 
         store_to_db=cust_data.create(**my_data)
        
         get_data_db=cust_data.filter(Receipt_Number=Receipt_Number)
         updating_row=cust_data.get(Receipt_Number=Receipt_Number)
+        updating_row.total_amt_update()
+
+        prsent=datetime.now()
+        pr_date=prsent.date()
+
+        total_amount_and_amt_paid=get_data_db.values_list("Total_Amount","Amount_Paid")
+        total_amount=total_amount_and_amt_paid[0][0]
+        amt_paid=total_amount_and_amt_paid[0][1]
+        updating_row.balance_update(amt_paid)
+
 
         if pay_mode=="cash":
             updating_row.cash_mode(paid_amt=amt_paid)
+            if amt_paid==total_amount:
+                txt=f'0'
+                updating_row.adv_pay(paid_amt=txt)
+                updating_row.clear_date(paid_date=pr_date)
+            else:
+                txt=f'{amt_paid} Cash'
+                # print(txt)
+                updating_row.adv_pay(paid_amt=txt)
+                
         else:
             updating_row.upi_mode(paid_amt=amt_paid)
+            if amt_paid==total_amount:
+                txt=f'0'
+                updating_row.adv_pay(paid_amt=txt)
+                updating_row.clear_date(paid_date=pr_date)
+            else:
+                txt=f'{amt_paid} UPI'
+                updating_row.adv_pay(paid_amt=txt)
+
 
         rcpt=get_data_db.values("Receipt_Number")[0]["Receipt_Number"]
 
         date=get_data_db.values("Booking_Date")[0]["Booking_Date"]
+
         
-        cust_info=get_data_db.values("Receipt_Number","Customer_Name","Contact","Irumudi_Price","Irumudi_Quantity","Schedule_Date","Total_Amount","Amount_Paid","Balance")[0]
+        cust_info=get_data_db.values("Receipt_Number","Customer_Name","Contact","Irumudi_Price","Irumudi_Quantity","Schedule_Date","Scheduled_Time","Total_Amount","Amount_Paid","Balance")[0]
+        
+        file_path=f'C:\\Users\\CHHANUKYA STARK\\OneDrive\\Documents\\All_Receipts\\Irumudi_Bookings\\{rcpt}_({date}).pdf'
+        output_pdf=generate_pdf(file_path,title,rcpt,date,cust_info)
 
-        output_pdf=generate_pdf(title,rcpt,date,cust_info)
-
-        # messages.success(request, 'Information Successfully Added')
-        return  output_pdf
+        messages.success(request, 'Booking Successfull')
+        
+        return  redirect('irumudi_book')
         
         # return redirect('/irumudi_recepit')
     return render(request,'temple_app/book_irumudi.html')
     
 
 def items_list_(request):
-    title="Item Contents"
+    title="ITEMS CONTENTS"
 
     if request.method=="POST":    
         
@@ -141,8 +173,7 @@ def items_list_(request):
             if  found_item_stock < 1:
                 messages.error(request,f'{ item_name} OUT OF STOCK')
                 return redirect('/irumudi_items')
-            else:
-                get_item.update_stock_on_sale(quantity_sold=quantity_sold)
+            
             
             session_data=f'{item_name}'
             
@@ -155,20 +186,26 @@ def items_list_(request):
         
         elif 'submit_button' in request.POST:
             database_obj=Items_sold_rcpt.objects
-            Receipt_Number="IL-" + str(database_obj.count()+ 1 + 1000)  
+            Receipt_Number="ML-" + str(database_obj.count()+ 1 + 1000)  
             item_content=request.session
             pay_mode=request.POST.get("Payment_Mode")
 
             total_amount=int()
             product_name=""
+            quantity_sold=int()
             for  key,value in item_content.items():
                price= inventory_items_stock.objects.filter(items=key).values("items_sale_price")[0]["items_sale_price"]
+               update_stock=inventory_items_stock.objects.get(items=key)
+               update_stock.update_stock_on_sale(quantity_sold=value[0])
                total_amount+=price*value[0]
                product_name+=f"{key}-{value}, "
+               quantity_sold
 
             
             store_to_db=database_obj.create(Receipt_Number=Receipt_Number,Total_Amount=total_amount,Product_name=product_name)
             update_row=database_obj.get(Receipt_Number=Receipt_Number)
+            
+            
 
             if pay_mode=="cash":
                 update_row.update_cash(paid_amt=total_amount)
@@ -176,16 +213,18 @@ def items_list_(request):
                 update_row.update_upi(paid_amt=total_amount)
 
             fetch_date=database_obj.filter(Receipt_Number=Receipt_Number).values("Date")[0]["Date"]
-            
-            output_file=generate_pdf(title,Receipt_Number,fetch_date,item_content,total_amount,col_list,table)
+            file_path=f'C:\\Users\\CHHANUKYA STARK\\Documents\\All_Receipts\\MATERIALS\\{Receipt_Number}_({fetch_date}).pdf'
+            output_file=generate_pdf(file_path,title,Receipt_Number,fetch_date,item_content,total_amount,col_list,table)
             request.session.flush()
-            return output_file
+            messages.success(request, 'Materials Added Successfully ')
+            return redirect('/irumudi_items')
     
         elif 'check_button' in request.POST:
             item_name=data.get("items_value")
             stock_item=inventory_items_stock.objects.filter(items=item_name).values("items_in_stock")[0]['items_in_stock']
             messages.info(request, f' Only {stock_item} Left In Stock ')
             return redirect('/irumudi_items')
+
         elif 'finish' in request.POST:
             request.session.flush()
     return render(request,"temple_app/irumudi_items_list.html", {"list_of_items":items_list})
@@ -196,7 +235,6 @@ def maaladharane(request):
 
     if request.method=="POST":
         data=request.POST
-
         Customer_Name=data.get("Customer_Name")
         pay_mode=data.get("Payment_Mode")
         Receipt_Number="MD-" + str(database_obj.count()+ 1 + 1000)
@@ -209,14 +247,18 @@ def maaladharane(request):
             update_row.update_cash()
         else:
             update_row.update_upi()
+
         cust_info=get_data_db.values("Receipt_Number","Customer_Name","Total_Amount")[0]
         rcpt_no=get_data_db.values("Receipt_Number")[0]["Receipt_Number"]
 
         date=get_data_db.values("Date")[0]["Date"]
 
+        file_path=f'C:\\Users\\CHHANUKYA STARK\\Documents\\All_Receipts\\Maaladharane_and_Archane\\{rcpt_no}_({date}).pdf'
 
-        output_file=generate_pdf(title,rcpt_no,date,cust_info)
-        return  output_file
+        output_file=generate_pdf(file_path,title,rcpt_no,date,cust_info)
+
+        messages.success(request, 'Submission Successfull')
+        return redirect('maaladharane')
     
     return render (request, 'temple_app/maaladharane.html')
 
@@ -246,9 +288,10 @@ def ghee(request):
 
         date=get_data_db.values("Date")[0]["Date"]
 
-
-        output_file=generate_pdf(title,rcpt_no,date,cust_info)
-        return  output_file
+        file_path=f'C:\\Users\\CHHANUKYA STARK\\Documents\\All_Receipts\\Ghee_Coconut\\{rcpt_no}_({date}).pdf'
+        output_file=generate_pdf(file_path,title,rcpt_no,date,cust_info)
+        messages.success(request, 'Submission Successfull')
+        return  redirect('ghee')
     
     return render (request, 'temple_app/ghee_recp.html')
 
@@ -258,7 +301,8 @@ def irumudi_register(request):
     to_be_paid=int()
     int_amt_paid=int()
     total_amt=int()
-
+    prsent=datetime.now()
+    pr_date=prsent.date()
     if 'get_button' in request.POST:
         count=Irumudi_bookig_receipt.objects.filter(Balance__gte=1).count()
         print(count)
@@ -274,8 +318,7 @@ def irumudi_register(request):
             message="No Dues Found !"  
      
         return render (request, 'temple_app/table_record.html',{'data_list':data,'key_set':key_col,'text':message})
-        
-        # return render (request, 'temple_app/records_irumudi.html',{'data_list':data,'key_set':key_col})
+    
     elif 'search_due' in request.POST:
         Receipt_Number=request.POST.get("Receipt_Number")
         request.session['Receipt_no']=Receipt_Number
@@ -291,8 +334,10 @@ def irumudi_register(request):
             return redirect('/irumudi_record')       
         
         return render (request, 'temple_app/records_irumudi.html',{'balance':to_be_paid, 'rx_c':rx_rc})
-    
+
     elif 'pay_due_clicked' in request.POST:
+        title="BALANCE PAID RECEIPT"
+
         rx_rcpt=request.session["Receipt_no"]
         due=int(request.POST.get("Balance"))
         # print(rx_rcpt,due)
@@ -305,12 +350,29 @@ def irumudi_register(request):
 
         update_bal_date=update_row.clear_date(paid_date=pr_date)
         update_bal_paid=update_row.balance_paid(paid_amt=due)
+        balance_rcpt_no=f'BRN-{rx_rcpt}'
+        update_row.balance_rcpt(no=balance_rcpt_no)
+
         if pay_mode=="cash":
             update_row.cash_mode(paid_amt=due)
+            txt="Cash"
+            update_row.bal_pay_mode(mode=txt)
         else:
+            txt="UPI"
+            update_row.bal_pay_mode(mode=txt)
             update_row.upi_mode(paid_amt=due)
+        
+        get_all_obj=Irumudi_bookig_receipt.objects.filter(Receipt_Number=rx_rcpt)
+        get_info=get_all_obj.values("Balance_Receipt_no","Customer_Name","Contact","Irumudi_Price","Irumudi_Quantity","Schedule_Date","Scheduled_Time","Total_Amount","Amount_Paid","Balance_Amount_Paid","Advance_Paid","Balance")[0]
+        get_date=get_all_obj.values("Balance_Clear_Date")[0]["Balance_Clear_Date"]
+        get_BNR_no=get_all_obj.values("Balance_Receipt_no")[0]["Balance_Receipt_no"]
+        
+        file_path=f'C:\\Users\\CHHANUKYA STARK\\Documents\\All_Receipts\\Balace_Receipts\\{get_BNR_no}_({get_date}).pdf'
+        closure_pdf=generate_pdf(file_path,title,get_BNR_no,get_date,get_info)
+    
         messages.success(request,f" Amount of Rs.{due} Paid ")
         return redirect('/irumudi_record')
+    
     request.session.clear()
     return render (request, 'temple_app/records_irumudi.html')
     
@@ -323,38 +385,62 @@ def expenses(request):
         from_Date=data.get("from_Date")
         to_Date=data.get("to_Date")
 
-        ir_result,ir_cash_value=ir_fun(from_Date,to_Date)
-        print("fun result",ir_result)
+        ir_result,ir_cash_value,ir_result2,ir_cash_value2=ir_fun(from_Date,to_Date)
+        # print("fun result",ir_result,ir_result2)
         ml_result=mal_fun(from_Date,to_Date)
 
         il_result,il_cash_value=il_fun(from_Date,to_Date)
 
         gc_result=gc_fun(from_Date,to_Date)
         # print(gc_result)
+
         donation_lst,donation_info=donate_fun(from_Date,to_Date)
 
-        if donation_lst!=None:
+        if donation_lst!=[]:
             donate_amt=donation_lst[2]
         else:
             donate_amt=0
-        # print("...............total_d",donate_amt)
-        zipped_data=[ir_result,ml_result,gc_result,il_result]
-        
-        grand_total_=0
-        for i in zipped_data:
-            grand_total_+=fetch_2_index(i)
+       
+        zipped_data=[ir_result,ml_result,gc_result,il_result,donation_lst]
+        zip2=[ir_result2]
+        print(ir_result,ml_result,gc_result,il_result,donation_lst)
+        # print(ir_result,ir_result2,ir_cash_value,ir_cash_value2)
 
-        grand_total_+=donate_amt
-        net_result,exp_values,exp_grand_total=exp_fun(from_Date,to_Date,grand_total_)
+       
+        grand_total_=0
+        cash_grand_total_1=0
+        upi_grand_total_1=0
+
+        for i in zipped_data:
+            gt,csh,upi=fetch_index(i)
+            grand_total_+=gt
+            cash_grand_total_1+=csh
+            upi_grand_total_1+=upi
+
+        cash_grand_total_2=0
+        upi_grand_total_2=0
+        grand_total_2=0
+        
+        for i in zip2:
+            gt,csh,upi=fetch_index(i)
+            grand_total_2+=gt
+            cash_grand_total_2+=csh
+            upi_grand_total_2+=upi
+        print(grand_total_,grand_total_2)
+
+        grand_total_+=grand_total_2
+        cash_grand_total_1+=cash_grand_total_2
+        upi_grand_total_1+= upi_grand_total_2
+        
+        
+        overall_grand_total=grand_total_
+        net_result,exp_values,exp_grand_total=exp_fun(from_Date,to_Date,overall_grand_total)
 
         col1=["Receipt Range","Sold","Total Cost","Cash","UPI"]
         col2=["Receipt Range","Total Donation"]
 
-        print(ir_result,ml_result,gc_result,il_result, grand_total_)
 
-        # net_total_today=daily_fun(net_result)
-
-        return render(request,'temple_app/report_table.html',{"ir_data":ir_result,'ml_data': ml_result,"gl_data":gc_result, "id_data":il_result,"col1":col1,"from_date":from_Date,"to_date":to_Date,"items_sold":il_cash_value,"irumudi_sold":ir_cash_value,"gt":grand_total_,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_result,"col2":col2,"donation_amt":donation_lst,"donation_values":donation_info})
+        return render(request,'temple_app/report_table.html',{"ir_data":ir_result,'ml_data': ml_result,"gl_data":gc_result, "id_data":il_result,"col1":col1,"from_date":from_Date,"to_date":to_Date,"items_sold":il_cash_value,"irumudi_sold":ir_cash_value,"gt":grand_total_,"exp_values":exp_values,"grand_total":exp_grand_total,"net_balance":net_result,"col2":col2,"donation_amt":donation_lst,"donation_values":donation_info,"ir_data2":ir_result2,"irumudi_sold2":ir_cash_value2,"cash_gt_1":cash_grand_total_1,"upi_gt_1":upi_grand_total_1,"cash_gt_2":cash_grand_total_2,"upi_gt_2":upi_grand_total_2,"gt_2":grand_total_2,"ogt":overall_grand_total})
     
     return render(request,'temple_app/cash_report.html',{'my_rcpts':pass_data})
     
@@ -391,49 +477,65 @@ def scheduled_irumudi(request):
     return render(request,'temple_app/scheduled_list_irumudi.html')
 
 def donate(request):
-    rcpt_title="Donation"
+    rcpt_title="DONATION"
     if request.method=="POST":
         data=request.POST
         Customer_Name=data.get("Customer_Name")
         Contact=data.get("Contact")
         Amount_Paid=data.get("Amount_Paid")
+        Payment_Mode=data.get("Payment_Mode")
 
         database_obj=Donations.objects
         Receipt_Number="DN-" + str(database_obj.count()+ 1 + 1000)
+
         store_to_db=database_obj.create(Receipt_Number=Receipt_Number,Customer_Name=Customer_Name,Contact=Contact,Amount_Paid=Amount_Paid)
+        get_obj=database_obj.get(Receipt_Number=Receipt_Number)
+        if Payment_Mode=="cash":
+            get_obj.update_cash(paid_amt=Amount_Paid)
+        else:
+            get_obj.update_upi(paid_amt=Amount_Paid)
         donation_db=database_obj.filter(Receipt_Number=Receipt_Number)
+
+
         donation_info=donation_db.values("Receipt_Number","Customer_Name","Contact","Amount_Paid")[0]
         rcpt_no=donation_db.values("Receipt_Number")[0]["Receipt_Number"]
 
         pr_date=donation_db.values("Date")[0]["Date"]
-        out=generate_pdf(rcpt_title,rcpt_no,pr_date,donation_info)
+        
+        file_path=f'C:\\Users\\CHHANUKYA STARK\\Documents\\All_Receipts\\Donations\\{rcpt_no}_({pr_date}).pdf'
+        out=generate_pdf(file_path,rcpt_title,rcpt_no,pr_date,donation_info,None,None,False,True)
         print(donation_db)
-        return out
+        messages.success(request, 'Donation Successfull')
+        return redirect('donate')
        
     return render(request,'temple_app/donation.html')
 
 
-def generate_pdf(rcpt_title, rcpt_no,current_date,query_data,total_amt=None,col_name_list=None,table=False):
-    
+def generate_pdf(file_path,rcpt_title,rcpt_no,current_date,query_data,total_amt=None,col_name_list=None,table=False,dn=False):
+   
     sl_no=1
-    if rcpt_no:
-        file_name=f'{rcpt_no}_({current_date}).pdf'
-    else:
-        file_name=f'Items_sold_({current_date})'.pdf
+    # if rcpt_no:
 
+    #     file_name=f'{rcpt_no}_({current_date}).pdf'
+    # else:
+    #     file_name=f'Items_sold_({current_date}).pdf'
 
     header=["                     || Om Sri Swami Sharanam Ayyappa ||        "                         
             ,"  Sri Kaliyuga Varada Ayyappaswamy Temple, Ranganathapura,       ",
             "         Prashanthanagar, 6th Main Road, Bangalore - 79.       "]
     
-    response = HttpResponse(content_type='application/pdf')
+    # response = HttpResponse(content_type='application/pdf')
 
-    response['Content-Disposition'] = 'attachment; filename= {0}'.format(file_name)
+    # response['Content-Disposition'] = 'attachment; filename= {0}'.format(file_name)
+
     y=690
     y2=800
     x=70
-    p = canvas.Canvas(response)
+    p = canvas.Canvas(file_path)
     p.setFont("Helvetica", 10)
+    if dn:
+        text=f'THANKS FOR YOUR CONTRIBUTION'
+        p.drawString(200,600,text)
 
     if total_amt:
         text=f'Total Amount: Rs.{total_amt}'
@@ -474,6 +576,12 @@ def generate_pdf(rcpt_title, rcpt_no,current_date,query_data,total_amt=None,col_
 
             elif key=="Balance":      
                 res=f' {key} : Rs. {value}. '
+
+            elif key=="Balance_Amount_Paid":
+                res=f' {key} : Rs. {value}. '
+            elif key=="Advance_Paid":
+                res=f' {key} : Rs. {value}. '
+
             else:
                 
                 res=f' {sl_no}. {key} : {value}'
@@ -483,83 +591,106 @@ def generate_pdf(rcpt_title, rcpt_no,current_date,query_data,total_amt=None,col_
             y-=20
     p.showPage()
     p.save()
+    # print("pdf_res",response)
     
-    return response
 
 
 def ir_fun(from_date,to_date):
-    # try:
+    irumudi_list=[]
+    irumudi_cash_values=[]
+
+    irumudi_list2=[]
+    irumudi_cash_values2=[]
+    date_object = datetime.strptime(from_date, '%Y-%m-%d').date()
+    date_object2 = datetime.strptime(to_date, '%Y-%m-%d').date()
+    
     irumudi_cash=Irumudi_bookig_receipt.objects.all().filter(Booking_Date__range=(from_date,to_date))
     irumudi_2_cash=Irumudi_bookig_receipt.objects.all().filter(Balance_Clear_Date__range=(from_date,to_date))
-    print("I AWS CALLED IR",irumudi_2_cash,irumudi_cash)
+    try:
+       
+        # print("I AWS CALLED IR",irumudi_2_cash,irumudi_cash)
 
-    if irumudi_cash.exists():
-        irumudi_sale_count=irumudi_cash.count()
-        irumudi_cash_values=irumudi_cash.values_list("Receipt_Number","Balance_Amount_Paid","Cash","UPI")
-        #print(irumudi_cash_values)
+        if irumudi_cash.exists():
+            irumudi_sale_count=irumudi_cash.count()
+            irumudi_cash_values=irumudi_cash.values_list("Receipt_Number","Balance_Clear_Date","Amount_Paid","Cash","UPI","Advance_Paid")
+            print(irumudi_cash_values)
 
-        end_index=irumudi_sale_count-1
-        start_rcpt=irumudi_cash_values[0][0]
-        end_rcpt=irumudi_cash_values[end_index][0]
+            end_index=irumudi_sale_count-1
+            start_rcpt=irumudi_cash_values[0][0]
+            end_rcpt=irumudi_cash_values[end_index][0]
 
-        total_cost_in_set_period=0
-        cash_amt=0
-        upi_amt=0
-        for key,val,csh,upi in irumudi_cash_values:
-            total_cost_in_set_period+=val
-            cash_amt+=csh
-            upi_amt+=upi
-            # print(key,val)
-        irumudi_list=[(start_rcpt,end_rcpt),irumudi_sale_count,total_cost_in_set_period,cash_amt,upi_amt]
-        # print(start_rcpt,end_rcpt,irumudi_sale_count,total_cost_in_set_period)
-        return irumudi_list,irumudi_cash_values
-    # elif not irumudi_cash.exists():    
-    #     irumudi_list=[]
-    #     return irumudi_list,None
-    
-    if irumudi_2_cash.exists():
-        print("2 was called ")
-        irumudi_sale_count=irumudi_2_cash.count()
-        irumudi_cash_values=irumudi_2_cash.values_list("Receipt_Number","Amount_Paid","Cash","UPI")
-        #print(irumudi_cash_values)
+            total_cost_in_set_period=0
+            cash_amt=0
+            upi_amt=0
 
-        end_index=irumudi_sale_count-1
-        start_rcpt=irumudi_cash_values[0][0]
-        end_rcpt=irumudi_cash_values[end_index][0]
-
-        total_cost_in_set_period=0
-        cash_amt=0
-        upi_amt=0
-        for key,val,csh,upi in irumudi_cash_values:
-            total_cost_in_set_period+=val
-            cash_amt+=csh
-            upi_amt+=upi
-            # print(key,val)
-        irumudi_list=[(start_rcpt,end_rcpt),irumudi_sale_count,total_cost_in_set_period,cash_amt,upi_amt]
-        # print(start_rcpt,end_rcpt,irumudi_sale_count,total_cost_in_set_period)
-        return irumudi_list,irumudi_cash_values
-    
-    if not irumudi_2_cash.exists() or irumudi_cash.exists():
-        irumudi_list=[]
-        irumudi_cash_values=[]
-        return irumudi_list,irumudi_cash_values
-    
-
-    # except:
-    #     irumudi_cash=Irumudi_bookig_receipt.objects.all().filter(Booking_Date=from_date)
-    #     if not irumudi_cash.existst():
-    #         irumudi_list=[]
-    #         return irumudi_list,None
+            for key,bcd,val,csh,upi,advp in irumudi_cash_values:
+                if key!= None:   
+                    total_cost_in_set_period+=val
+                    cash_amt+=csh
+                    upi_amt+=upi
+                    # irumudi_cash_values=irumudi_cash.values_list("Receipt_Number","Balance_Clear_Date","Amount_Paid","Cash","UPI","Advance_Paid")
+            
+                elif bcd>date_object2:
+                    val_spli=int(advp.split()[0])
+                    total_cost_in_set_period+=val_spli
+                    # irumudi_cash_values=irumudi_cash.values_list("Receipt_Number","Balance_Clear_Date","Advance_Paid","Cash","UPI","Amount_Paid")
+                    continue
+                
+                elif bcd==None:
+                    val_spli=int(advp.split()[0])
+                    mode=advp.split()[1]
+                    total_cost_in_set_period+=val_spli
+                    # irumudi_cash_values=irumudi_cash.values_list("Receipt_Number","Balance_Clear_Date","Advance_Paid","Cash","UPI","Amount_Paid")
+                    if mode=='Cash':
+                        cash_amt+=csh
+                    else:
+                        upi_amt+=upi
+                    continue
+               
+            irumudi_list=[(start_rcpt,end_rcpt),irumudi_sale_count,total_cost_in_set_period,cash_amt,upi_amt]
+            # print(start_rcpt,end_rcpt,irumudi_sale_count,total_cost_in_set_period)
         
-    # try:
-    
-    # except:
-    #      irumudi_2_cash=Irumudi_bookig_receipt.objects.all().filter(Balance_Clear_Date=from_date)
-    #      if not irumudi_2_cash.existst():
-    #         irumudi_list=[]
+        if irumudi_2_cash.exists():
+            print("2 was called ")
+            irumudi_sale_count2=irumudi_2_cash.count()
+            irumudi_cash_values2=irumudi_2_cash.values_list("Balance_Receipt_no","Balance_Amount_Paid","Balance_Amount_Payment_Mode","Booking_Date","Balance_Clear_Date")
 
+            print(irumudi_2_cash)
 
-    # balance_amt_cleared=irumudi_2_cash.values_list("Balance_Amount_Paid")
+            end_index2=irumudi_sale_count2-1
+            start_rcpt2=irumudi_cash_values2[0][0]
+
+            end_rcpt2=irumudi_cash_values2[end_index2][0]
+
+            total_cost_in_set_period2=0
+            cash_amt2=0
+            upi_amt2=0
+            
+            for key,val,pay_mode,bkd,bcd in irumudi_cash_values2:
+               
+                if (bkd==bcd)  :
+                    total_cost_in_set_period2+=0
+                    continue
+                elif (bcd>date_object) :
+                    total_cost_in_set_period2+=0
+                    continue
+
+                total_cost_in_set_period2+=val
+                if pay_mode=="Cash":
+                    cash_amt2+=val
+                elif pay_mode=="UPI":
+                    upi_amt2+=val
+                # print(key,val)
+
+            irumudi_list2=[(start_rcpt2,end_rcpt2),irumudi_sale_count2,total_cost_in_set_period2,cash_amt2,upi_amt2]
+            print(irumudi_list2)
+
+        # print("try_block",irumudi_list,irumudi_cash_values,irumudi_list2,irumudi_cash_values2)
+        return irumudi_list,irumudi_cash_values,irumudi_list2,irumudi_cash_values2
+    except:
+        return irumudi_list,irumudi_cash_values,irumudi_list2,irumudi_cash_values2
+       
+            
 
 def mal_fun(from_date,to_date):
     ## MAALADHARANE
@@ -571,7 +702,7 @@ def mal_fun(from_date,to_date):
     except:
         maaladharane_cash=Maaladharane.objects.all().filter(Date=from_date)
         if not maaladharane_cash.exists():
-            print("ML INVALID")
+            # print("ML INVALID")
             maaladharane_list=[]
             return maaladharane_list
         
@@ -696,13 +827,6 @@ def exp_fun(from_date,to_date,grand_total):
 def daily_fun(net_balance):
     income_col=None
     date_col=None
-
-    # try:
-    #     store_net_balance=Daily_Expense.daily_update(today_balance=net_balance)
-        
-    # except:
-    #     Daily_Expense.objects.create(Income=net_balance)
-    
     last_row=Daily_Expense.objects.last()
     income_col=last_row.Income
     date_col=last_row.Date
@@ -710,7 +834,7 @@ def daily_fun(net_balance):
     prsent=datetime.now()
     pr_date=prsent.date()
   
-    print("############my_income", income_col,date_col,prsent,pr_date)
+    # print("############my_income", income_col,date_col,prsent,pr_date)
 
     if date_col==pr_date:
         print("Yes Equal")
@@ -739,27 +863,31 @@ def daily_fun(net_balance):
 def donate_fun(from_date,to_date):
     fetch_data=Donations.objects.filter(Date__range=(from_date,to_date))
     if not fetch_data.exists():
-        return None,None
+        return [],[]
     print("Donation Available")
-    db_values=fetch_data.values_list("Receipt_Number","Amount_Paid")
+    db_values=fetch_data.values_list("Receipt_Number","Amount_Paid","Cash","UPI")
     db_count=fetch_data.count()
     db_end_index=db_count-1
     total_donation=0
     start_index=db_values[0][0]
     end_index=db_values[db_end_index][0]
-
-    for rc,amt in db_values:
+    cash_total=0
+    upi_total=0
+    for rc,amt,csh,upi in db_values:
         total_donation+=amt
+        cash_total+=csh
+        upi_total+=upi
+
     print(total_donation)
-    donation_list=[(start_index,end_index),db_count,total_donation]
+    donation_list=[(start_index,end_index),db_count,total_donation,cash_total,upi_total]
     return donation_list,db_values
    
 
 
-def fetch_2_index(list_of_lists):
+def fetch_index(list_of_lists):
     
     if list_of_lists==[]:
-        return 0
+        return 0,0,0
     else:
-        return list_of_lists[2]
-    
+        return list_of_lists[2],list_of_lists[3],list_of_lists[4]
+
